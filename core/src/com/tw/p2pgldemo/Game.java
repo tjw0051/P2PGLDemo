@@ -14,7 +14,7 @@ public class Game extends com.badlogic.gdx.Game {
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
-		assetManager = new AssetManager();
+		assetManager = AssetManager.GetInstance();
 		setScreen(new MainMenu(this));
 	}
 
