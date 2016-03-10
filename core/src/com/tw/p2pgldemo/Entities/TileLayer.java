@@ -31,12 +31,12 @@ public class TileLayer {
      * @param cells Number of cells in layer
      * @param level Level name of file to be loaded
      */
-    public TileLayer(Rectangle tileRect, Rectangle textureRect, Vector2 pos, Vector2 cells, String level, float scaling) {
+    public TileLayer(Rectangle tileRect, Rectangle textureRect, Vector2 pos, Vector2 cells, String[] tileValues, float scaling) {
         this.tileRect = tileRect;
         this.textureRect = textureRect;
         this.pos = pos;
         this.cells = cells;
-        tileValues = AssetManager.LoadLevel("a1");
+        this.tileValues = tileValues;
         aM = AssetManager.GetInstance();
         this.scaling = scaling;
         CreateTiles();

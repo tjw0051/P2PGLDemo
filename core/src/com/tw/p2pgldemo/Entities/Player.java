@@ -68,26 +68,60 @@ public class Player {
     }
 
     public void render(SpriteBatch spriteBatch) {
-        switch (playerState) {
-            case STANDING: {
-                animTime += Gdx.graphics.getDeltaTime();
-                currentFrame = walkForwardAnim.getKeyFrame(animTime, true);
-                break;
-            }
-            case WALKING: {
-                //Arrived at destination
-                if(pos.x == destination.x && pos.y == destination.y)
-                    playerState = PlayerState.STANDING;
-                //Travelling to destination
-                pos.interpolate(destination, walkingSpeed, Interpolation.linear);
-                //Animate walk
-                break;
-            }
-        }
+
+        Animate();
+
 
         spriteBatch.begin();
         spriteBatch.draw(currentFrame, pos.x, pos.y, rectangle.getWidth(), rectangle.getHeight());
         spriteBatch.end();
+    }
+
+    public void Animate() {
+        animTime += Gdx.graphics.getDeltaTime();
+
+        switch (playerState) {
+            case STANDING: {
+                //currentFrame = walkForwardAnim.getKeyFrame(animTime, true);
+                currentFrame = idleFrame;
+                break;
+            }
+            case WALKING: {
+                CalculateDirection();
+                //Arrived at destination
+                if(pos.x == destination.x && pos.y == destination.y) {
+                    playerState = PlayerState.STANDING;
+                    direction = Direction.FORWARD;
+                    currentFrame = idleFrame;
+                }
+                //Travelling to destination
+                pos.interpolate(destination, walkingSpeed, Interpolation.linear);
+                //Animate walk
+                switch (direction) {
+                    case LEFT:
+                        currentFrame = walkLeftAnim.getKeyFrame(animTime, true);
+                        break;
+                    case RIGHT:
+                        currentFrame = walkRightAnim.getKeyFrame(animTime, true);
+                        break;
+                    case FORWARD:
+                        currentFrame = walkForwardAnim.getKeyFrame(animTime, true);
+                        break;
+                    case BACKWARD:
+                        currentFrame = walkBackAnim.getKeyFrame(animTime, true);
+                }
+                break;
+            }
+        }
+    }
+
+    public void CalculateDirection() {
+        float xDiff = pos.x - destination.x;
+        float yDiff = pos.y - destination.y;
+        if(Math.abs(xDiff) > Math.abs(yDiff))//moving horizontally
+            direction = (pos.x > destination.x) ? Direction.LEFT : Direction.RIGHT;
+        else
+            direction = (pos.y > destination.y) ? Direction.FORWARD : Direction.BACKWARD;
     }
 
     //Order player to walk to position

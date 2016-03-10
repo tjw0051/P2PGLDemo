@@ -62,16 +62,22 @@ public class AssetManager {
         return textures;
     }
 
-    public static String[] LoadLevel(String levelName) {
+    public static String[][] LoadLevel(String levelName) {
+        String level[][];
+
         FileHandle file = Gdx.files.internal("Levels/" + levelName + ".txt");
         String text = file.readString();
-        String noOfLayers = (text.split("\\s+", 2))[0];
+        int noOfLayers = Integer.parseInt((text.split("\\s+", 2))[0]);
+        level = new String[noOfLayers][];
         String layers = (text.split("\\s+", 2))[1];
-        String layer1 = layers.split("\r\n\r\n")[0];
-        String[] layer1Values = layer1.split("\\s+");
+        for(int i = 0; i < noOfLayers; i++) {
+            String layer = layers.split("\r\n\r\n")[i];
+            level[i] = layer.split("\\s+");
+        }
+
         //Gdx.app.log("P2PGL", " val1= " + layer1Values[0] + " valLast = " + layer1Values[layer1Values.length - 1]);
         //levels.put(levelName, layer1Values);
-        return layer1Values;
+        return level;
     }
 
     //TODO: test
