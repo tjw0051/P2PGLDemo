@@ -1,10 +1,11 @@
-package com.tw.p2pgldemo;
+package com.tw.p2pgldemo.Entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 
@@ -15,6 +16,8 @@ import java.util.Set;
  */
 public class Player {
 
+    static final float walkingSpeed = 0.05f;
+
     Rectangle rectangle;
     Texture texture;
     Vector2 cellSize = new Vector2(32, 48);
@@ -23,19 +26,31 @@ public class Player {
             walkForwardFrames, walkBackFrames;
     TextureRegion idleFrame, currentFrame;
     Animation walkLeftAnim, walkRightAnim, walkForwardAnim, walkBackAnim;
-    Vector2 pos;
+    Vector2 lastPos, pos, destination;
     float animTime;
+    PlayerState playerState;
+    Direction direction;
 
     public enum PlayerState {
         STANDING,
         WALKING
-
+    }
+    public enum Direction {
+        FORWARD,
+        BACKWARD,
+        LEFT,
+        RIGHT
     }
 
     public Player(Rectangle rect, Texture tex) {
         this.rectangle = rect;
         this.texture = tex;
         SetupAnimations();
+        playerState = PlayerState.STANDING;
+        direction = Direction.FORWARD;
+        pos = new Vector2(rect.x, rect.y);
+        destination = new Vector2(pos.x, pos.y);
+        lastPos = new Vector2(pos.x, pos.y);
     }
 
     public void SetupAnimations() {
@@ -53,10 +68,31 @@ public class Player {
     }
 
     public void render(SpriteBatch spriteBatch) {
-        animTime += Gdx.graphics.getDeltaTime();
-        currentFrame = walkForwardAnim.getKeyFrame(animTime, true);
+        switch (playerState) {
+            case STANDING: {
+                animTime += Gdx.graphics.getDeltaTime();
+                currentFrame = walkForwardAnim.getKeyFrame(animTime, true);
+                break;
+            }
+            case WALKING: {
+                //Arrived at destination
+                if(pos.x == destination.x && pos.y == destination.y)
+                    playerState = PlayerState.STANDING;
+                //Travelling to destination
+                pos.interpolate(destination, walkingSpeed, Interpolation.linear);
+                //Animate walk
+                break;
+            }
+        }
+
         spriteBatch.begin();
-        spriteBatch.draw(currentFrame, rectangle.x, rectangle.y, rectangle.getWidth(), rectangle.getHeight());
+        spriteBatch.draw(currentFrame, pos.x, pos.y, rectangle.getWidth(), rectangle.getHeight());
         spriteBatch.end();
+    }
+
+    //Order player to walk to position
+    public void Go(float x, float y) {
+        playerState = PlayerState.WALKING;
+        destination = new Vector2(x - rectangle.width / 2, y);
     }
 }

@@ -1,15 +1,11 @@
-package com.tw.p2pgldemo.Screens;
+package com.tw.p2pgldemo.Entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.maps.tiled.TiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.scenes.scene2d.ui.List;
 import com.tw.p2pgldemo.AssetManager;
-import org.w3c.dom.css.Rect;
 
 import java.util.ArrayList;
 
@@ -61,7 +57,7 @@ public class TileLayer {
                                                 Gdx.graphics.getHeight() - (pos.y + (y * tileRect.height * scaling)) - textureRect.height,
                                                 tileRect.width * scaling,
                                                 tileRect.height * scaling);
-                    tiles.add(new Tile(tileShape, textureShape, tex));
+                    tiles.add(new Tile(tileShape, textureShape, tex, new Vector2(x, y)));
 
                 }
                 tileValuesIter++;
@@ -69,27 +65,36 @@ public class TileLayer {
         }
     }
 
+    public void SetPos(float x, float y) {
+        this.pos.x  = x;
+        this.pos.y = y;
+        for(int i = 0; i < tiles.size(); i++) {
+            tiles.get(i).SetPos(pos.x + (tiles.get(i).cellPos.x * tileRect.width * scaling),
+                    Gdx.graphics.getHeight() - (pos.y + (tiles.get(i).cellPos.y * tileRect.height * scaling)) - textureRect.height);
+
+        }
+    }
+
+    /** Check for a collision with a tile in the tile layer.
+     * @param collider  Position of object colliding.
+     * @return  index of intersecting tile. Returns -1 if no collision.
+     */
+    public int TileCollisionCheck(Rectangle collider) {
+        //for(int i = 0; i < tiles.size(); i++) {
+        for(int i = tiles.size(); i --> 0;) {
+            if (tiles.get(i).GetRect().overlaps(collider))
+                return i;
+        }
+        return -1;
+    }
+
+    public Vector2 GetTilePos(int tileIndex) {
+        return tiles.get(tileIndex).GetCenter();
+    }
+
     public void render(SpriteBatch spriteBatch) {
 
         spriteBatch.begin();
-        /*
-        int tileValuesIter = 0;
-        for(int x = 0; x < cells.x; x++) {
-            for(int y = 0; y < cells.y; y++) {
-                String tileValue = tileValues[tileValuesIter];
-                if(!tileValue.equals("0")) {
-                    Texture tex = (Texture) aM.loadedTextures.get(tileValue);
-                    spriteBatch.draw(tex,
-                            pos.x + (x * tileRect.width),
-                            InvertHeight(pos.y + (y * tileRect.height)) - tileRect.height,
-                            textureRect.width,
-                            textureRect.height);
-
-                }
-                tileValuesIter++;
-            }
-        }
-        */
        spriteBatch.end();
 
         for(int i = 0; i < tiles.size(); i++) {
