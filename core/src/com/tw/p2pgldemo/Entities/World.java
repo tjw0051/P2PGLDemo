@@ -17,11 +17,11 @@ public class World {
         layers = new TileLayer[layerValues.length];
 
         for(int i = 0; i < layerValues.length; i++) {
-            layers[i] = new TileLayer(new Rectangle(0, 0, 100, 122), //50, 82, 75
+            layers[i] = new TileLayer(new Rectangle(0, 100, 100, 80), //50, 82, 75 //122
                     new Rectangle(0, 0, 100, 170),
                     new Vector2(0, 0),
                     new Vector2(10, 10), layerValues[i], 0.7f);
-            layers[i].SetPos(500, 100);
+            layers[i].SetPos(500, 300);
         }
     }
 

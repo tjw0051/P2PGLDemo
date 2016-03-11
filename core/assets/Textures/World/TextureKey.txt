@@ -1,2 +1,7 @@
-1 BrownBlock2.png
+1 BrownBlock.png
 2 TreeTall.png
+3 WaterBlock.png
+4 GrassBlock.png
+5 StoneBlockTall.png
+6 WallBlockTall.png
+7 StoneBlock.png

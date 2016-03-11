@@ -13,7 +13,7 @@ import java.util.ArrayList;
  * Created by t_j_w on 08/03/2016.
  */
 public class TileLayer {
-    Rectangle tileRect;
+    Rectangle tileBoundingBox;
     Rectangle textureRect;
     Vector2 pos;
     Vector2 cells;
@@ -25,14 +25,13 @@ public class TileLayer {
     float scaling;
 
     /**
-     * @param tileRect  Shape of tile
+     * @param tileBoundingBox  Shape of tile
      * @param textureRect   Shape of texture
      * @param pos   position offset of entire layer
      * @param cells Number of cells in layer
-     * @param level Level name of file to be loaded
      */
-    public TileLayer(Rectangle tileRect, Rectangle textureRect, Vector2 pos, Vector2 cells, String[] tileValues, float scaling) {
-        this.tileRect = tileRect;
+    public TileLayer(Rectangle tileBoundingBox, Rectangle textureRect, Vector2 pos, Vector2 cells, String[] tileValues, float scaling) {
+        this.tileBoundingBox = tileBoundingBox;
         this.textureRect = textureRect;
         this.pos = pos;
         this.cells = cells;
@@ -46,19 +45,27 @@ public class TileLayer {
         tiles = new ArrayList<Tile>();
 
         int tileValuesIter = 0;
-        for(int x = 0; x < cells.x; x++) {
-            for(int y = 0; y < cells.y; y++) {
+        for(int y = 0; y < cells.y; y++) {
+            for(int x = 0; x < cells.x; x++) {
                 String tileValue = tileValues[tileValuesIter];
                 if(!tileValue.equals("0")) {
                     Texture tex = (Texture) aM.loadedTextures.get(tileValue);
+                    /*
                     Rectangle textureShape = new Rectangle(textureRect.x * scaling, textureRect.y * scaling,
                             textureRect.width * scaling, textureRect.height * scaling);
-                    Rectangle tileShape = new Rectangle(pos.x + (x * tileRect.width * scaling),
-                                                Gdx.graphics.getHeight() - (pos.y + (y * tileRect.height * scaling)) - textureRect.height,
-                                                tileRect.width * scaling,
-                                                tileRect.height * scaling);
-                    tiles.add(new Tile(tileShape, textureShape, tex, new Vector2(x, y)));
-
+                    Rectangle tileBoundingBox = new Rectangle(pos.x + ((x * this.tileBoundingBox.width + this.tileBoundingBox.x - this.tileBoundingBox.x) * scaling),
+                                                Gdx.graphics.getHeight() - (pos.y + (y * this.tileBoundingBox.height * scaling)) - textureRect.height,
+                                                this.tileBoundingBox.width * scaling,
+                                                this.tileBoundingBox.height * scaling);
+                                                */
+                    Rectangle textureShape = new Rectangle(textureRect.x * scaling, textureRect.y * scaling,
+                            textureRect.width * scaling, textureRect.height * scaling);
+                    Rectangle tileBounding = new Rectangle(tileBoundingBox.x * scaling, tileBoundingBox.y * scaling,
+                            tileBoundingBox.width * scaling, tileBoundingBox.height * scaling);
+                    tiles.add(new Tile(tileBounding, textureShape, tex, new Vector2(
+                            pos.x + (x * this.tileBoundingBox.width * scaling),
+                            pos.y + (y * this.tileBoundingBox.height * scaling)),
+                            new Vector2(x, y)));
                 }
                 tileValuesIter++;
             }
@@ -68,11 +75,29 @@ public class TileLayer {
     public void SetPos(float x, float y) {
         this.pos.x  = x;
         this.pos.y = y;
+        /*
+        int tileIter = 0;
+        for(int yy = 0; yy < cells.y; yy++) {
+            for (int xx = 0; xx < cells.x; xx++) {
+                tiles.get(tileIter).SetPos(pos.x + (xx * this.tileBoundingBox.width * scaling),
+                        pos.y + (yy * this.tileBoundingBox.height * scaling));
+                tileIter++;
+            }
+        } */
+        for(int i = 0; i < tiles.size(); i ++) {
+            Vector2 layerIndex = tiles.get(i).layerIndex;
+            tiles.get(i).SetPos(pos.x + (layerIndex.x * this.tileBoundingBox.width * scaling),
+                    pos.y + (layerIndex.y * this.tileBoundingBox.height * scaling));
+        }
+
+        /*
         for(int i = 0; i < tiles.size(); i++) {
-            tiles.get(i).SetPos(pos.x + (tiles.get(i).cellPos.x * tileRect.width * scaling),
-                    Gdx.graphics.getHeight() - (pos.y + (tiles.get(i).cellPos.y * tileRect.height * scaling)) - textureRect.height);
+            tiles.get(i).SetPos(pos.x + (tiles.get(i).pos.x * tileBoundingBox.width * scaling),
+                    Gdx.graphics.getHeight() - (pos.y + (tiles.get(i).pos.y * tileBoundingBox.height * scaling)) - textureRect.height);
 
         }
+        */
+
     }
 
     /** Check for a collision with a tile in the tile layer.
