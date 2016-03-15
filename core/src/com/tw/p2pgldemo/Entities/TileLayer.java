@@ -5,7 +5,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.tw.p2pgldemo.AssetManager;
+import com.badlogic.gdx.scenes.scene2d.ui.List;
+import com.tw.p2pgldemo.IO.AssetManager;
+import com.tw.p2pgldemo.IO.Interaction;
 
 import java.util.ArrayList;
 
@@ -13,16 +15,16 @@ import java.util.ArrayList;
  * Created by t_j_w on 08/03/2016.
  */
 public class TileLayer {
-    Rectangle tileBoundingBox;
-    Rectangle textureRect;
-    Vector2 pos;
-    Vector2 cells;
-    String levelName;
-    String[] tileValues;
-    AssetManager aM;
-    int screenHeight;
-    java.util.List<Tile> tiles;
-    float scaling;
+    private Rectangle tileBoundingBox;
+    private Rectangle textureRect;
+    private Vector2 pos;
+    private Vector2 cells;
+    private String levelName;
+    private String[] tileValues;
+    private AssetManager aM;
+    private int screenHeight;
+    private java.util.List<Tile> tiles;
+    private float scaling;
 
     /**
      * @param tileBoundingBox  Shape of tile
@@ -30,7 +32,9 @@ public class TileLayer {
      * @param pos   position offset of entire layer
      * @param cells Number of cells in layer
      */
-    public TileLayer(Rectangle tileBoundingBox, Rectangle textureRect, Vector2 pos, Vector2 cells, String[] tileValues, float scaling) {
+    public TileLayer(Rectangle tileBoundingBox, Rectangle textureRect,
+                     Vector2 pos, Vector2 cells, String[] tileValues,
+                     float scaling, java.util.List<Interaction> interactionList) {
         this.tileBoundingBox = tileBoundingBox;
         this.textureRect = textureRect;
         this.pos = pos;
@@ -38,10 +42,10 @@ public class TileLayer {
         this.tileValues = tileValues;
         aM = AssetManager.GetInstance();
         this.scaling = scaling;
-        CreateTiles();
+        CreateTiles(interactionList);
     }
 
-    private void CreateTiles() {
+    private void CreateTiles(java.util.List<Interaction> interactionList) {
         tiles = new ArrayList<Tile>();
 
         int tileValuesIter = 0;
@@ -62,10 +66,22 @@ public class TileLayer {
                             textureRect.width * scaling, textureRect.height * scaling);
                     Rectangle tileBounding = new Rectangle(tileBoundingBox.x * scaling, tileBoundingBox.y * scaling,
                             tileBoundingBox.width * scaling, tileBoundingBox.height * scaling);
-                    tiles.add(new Tile(tileBounding, textureShape, tex, new Vector2(
+                    Tile tile = new Tile(tileBounding, textureShape, tex, new Vector2(
                             pos.x + (x * this.tileBoundingBox.width * scaling),
                             pos.y + (y * this.tileBoundingBox.height * scaling)),
-                            new Vector2(x, y)));
+                            new Vector2(x, y));
+                    for(Interaction interaction: interactionList) {
+                        if(interaction.getPos().x == x && interaction.getPos().y == y) {
+                            tile.SetInteraction(interaction);
+                        }
+                    }
+                    /*
+                    if(AssetManager.GetInstance().interactions.containsKey(tileValue)) {
+                        tile.isInteractive = true;
+                        tile.interactionParams = (String[])AssetManager.GetInstance().interactions.get(tileValue);
+
+                    }*/
+                    tiles.add(tile);
                 }
                 tileValuesIter++;
             }
@@ -85,7 +101,7 @@ public class TileLayer {
             }
         } */
         for(int i = 0; i < tiles.size(); i ++) {
-            Vector2 layerIndex = tiles.get(i).layerIndex;
+            Vector2 layerIndex = tiles.get(i).GetLayer();
             tiles.get(i).SetPos(pos.x + (layerIndex.x * this.tileBoundingBox.width * scaling),
                     pos.y + (layerIndex.y * this.tileBoundingBox.height * scaling));
         }
@@ -116,6 +132,8 @@ public class TileLayer {
     public Vector2 GetTilePos(int tileIndex) {
         return tiles.get(tileIndex).GetCenter();
     }
+
+    public Tile GetTile(int tileIndex) { return tiles.get(tileIndex); }
 
     public void render(SpriteBatch spriteBatch) {
 

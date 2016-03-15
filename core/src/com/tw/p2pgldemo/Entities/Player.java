@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.tw.p2pgldemo.IO.Interaction;
+import com.tw.p2pgldemo.Screens.GameScreen;
 
 import java.util.Set;
 
@@ -16,8 +18,10 @@ import java.util.Set;
  */
 public class Player {
 
-    static final float walkingSpeed = 0.05f;
+    static final float walkingSpeed = 0.7f;
+    int layer = 1;
 
+    GameScreen gameScreen;
     Rectangle rectangle;
     Texture texture;
     Vector2 cellSize = new Vector2(32, 48);
@@ -30,6 +34,7 @@ public class Player {
     float animTime;
     PlayerState playerState;
     Direction direction;
+    Interaction destinationInteraction;
 
     public enum PlayerState {
         STANDING,
@@ -42,7 +47,8 @@ public class Player {
         RIGHT
     }
 
-    public Player(Rectangle rect, Texture tex) {
+    public Player(Rectangle rect, Texture tex, GameScreen gameScreen) {
+        this.gameScreen = gameScreen;
         this.rectangle = rect;
         this.texture = tex;
         SetupAnimations();
@@ -53,7 +59,7 @@ public class Player {
         lastPos = new Vector2(pos.x, pos.y);
     }
 
-    public void SetupAnimations() {
+    private void SetupAnimations() {
         TextureRegion[][] allFrames = TextureRegion.split(texture, (int)cellSize.x, (int)cellSize.y);
         idleFrame = new TextureRegion(allFrames[0][0]);
         walkForwardFrames = new TextureRegion[] {allFrames[0][0], allFrames[0][1], allFrames[0][2], allFrames[0][3]};
@@ -77,7 +83,7 @@ public class Player {
         spriteBatch.end();
     }
 
-    public void Animate() {
+    private void Animate() {
         animTime += Gdx.graphics.getDeltaTime();
 
         switch (playerState) {
@@ -88,14 +94,18 @@ public class Player {
             }
             case WALKING: {
                 CalculateDirection();
-                //Arrived at destination
-                if(pos.x == destination.x && pos.y == destination.y) {
-                    playerState = PlayerState.STANDING;
-                    direction = Direction.FORWARD;
-                    currentFrame = idleFrame;
-                }
                 //Travelling to destination
                 pos.interpolate(destination, walkingSpeed, Interpolation.linear);
+                //Arrived at destination
+                if((int)pos.x == (int)destination.x && (int)pos.y == (int)destination.y) {
+                    destination = pos;
+                    playerState = PlayerState.STANDING;
+                    if(destinationInteraction != null) {
+                        Interact();
+                        destinationInteraction = null;
+                    }
+                }
+
                 //Animate walk
                 switch (direction) {
                     case LEFT:
@@ -115,7 +125,15 @@ public class Player {
         }
     }
 
-    public void CalculateDirection() {
+    private void Interact() {
+        if(destinationInteraction.getName().toString().equals("teleport")) {
+            System.out.println("teleported");
+            gameScreen.LoadWorld(destinationInteraction.getParam());
+            //Teleport the player
+        }
+    }
+
+    private void CalculateDirection() {
         float xDiff = pos.x - destination.x;
         float yDiff = pos.y - destination.y;
         if(Math.abs(xDiff) > Math.abs(yDiff))//moving horizontally
@@ -126,7 +144,22 @@ public class Player {
 
     //Order player to walk to position
     public void Go(float x, float y) {
-        playerState = PlayerState.WALKING;
-        destination = new Vector2(x - rectangle.width / 2, y);
+        if(playerState != PlayerState.WALKING) {
+            playerState = PlayerState.WALKING;
+            destination = new Vector2(x - rectangle.width / 2, y);
+        }
     }
+
+    public void Go(float x, float y, Interaction interaction) {
+        destinationInteraction = interaction;
+        Go(x, y);
+    }
+
+    public void Go(Tile tile) {
+        playerState = PlayerState.WALKING;
+        destination.x = tile.GetRect().x;
+        destination.y = tile.GetRect().y;
+    }
+
+    public int GetLayer() { return layer; }
 }

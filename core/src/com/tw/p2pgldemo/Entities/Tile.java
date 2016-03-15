@@ -5,18 +5,21 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.tw.p2pgldemo.IO.Interaction;
 
 /**
  * Created by t_j_w on 08/03/2016.
  */
 public class Tile {
-    Texture texture;
-    Rectangle rect;
-    Rectangle tileBoundingBox;
-    Rectangle textureRect;
-    Vector2 scale;
-    Vector2 pos;
-    Vector2 layerIndex;
+    private Texture texture;
+    private Rectangle rect;
+    private Rectangle tileBoundingBox;
+    private Rectangle textureRect;
+    private Vector2 scale;
+    private Vector2 pos;
+    private Vector2 layerIndex;
+    private boolean isInteractive;
+    private Interaction interaction;
 
     public Tile(Rectangle tileBoundingBox, Rectangle textureRect, Texture texture, Vector2 pos, Vector2 layerIndex) {
         this.tileBoundingBox = tileBoundingBox;
@@ -24,6 +27,7 @@ public class Tile {
         this.texture = texture;
         this.pos = pos;
         this.layerIndex = layerIndex;
+        this.isInteractive = false;
         this.rect = new Rectangle(this.pos.x - tileBoundingBox.x,
                 Gdx.graphics.getHeight() - (this.pos.y - tileBoundingBox.y),
                 textureRect.width, textureRect.height);
@@ -46,18 +50,24 @@ public class Tile {
         return new Vector2(rect.x + (rect.width / 2), rect.y + (rect.height / 2));
     }
 
-    public Rectangle GetRect() {
-        //return tileBoundingBox;
-        return rect;
-    }
-
     public void render(SpriteBatch spriteBatch) {
         spriteBatch.begin();
-        /*
-        spriteBatch.draw(texture,
-                tileBoundingBox.x, tileBoundingBox.y, textureRect.width, textureRect.height);
-                */
         spriteBatch.draw(texture, rect.x, rect.y, rect.width, rect.height);
         spriteBatch.end();
     }
+
+    public void SetInteraction(Interaction interaction) {
+        this.interaction = interaction;
+        isInteractive = true;
+    }
+
+    public Rectangle GetRect() { return rect; }
+
+    public Vector2 GetPos() { return pos; }
+
+    public Vector2 GetLayer() { return layerIndex; }
+
+    public Interaction GetInteraction() { return interaction; }
+
+    public boolean isInteractive() { return isInteractive; }
 }

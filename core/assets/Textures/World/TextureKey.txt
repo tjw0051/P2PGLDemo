@@ -5,3 +5,5 @@
 5 StoneBlockTall.png
 6 WallBlockTall.png
 7 StoneBlock.png
+8 ChestClosed.png
+9 Selector.png
