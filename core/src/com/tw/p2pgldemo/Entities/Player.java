@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.tw.p2pgldemo.IO.Interaction;
 import com.tw.p2pgldemo.Screens.GameScreen;
 
@@ -18,7 +19,7 @@ import java.util.Set;
  */
 public class Player {
 
-    static final float walkingSpeed = 0.7f;
+    static final float walkingSpeed = 0.5f;
     int layer = 1;
 
     GameScreen gameScreen;
@@ -30,11 +31,12 @@ public class Player {
             walkForwardFrames, walkBackFrames;
     TextureRegion idleFrame, currentFrame;
     Animation walkLeftAnim, walkRightAnim, walkForwardAnim, walkBackAnim;
-    Vector2 lastPos, pos, destination;
+    Vector2 pos, destination;
     float animTime;
     PlayerState playerState;
     Direction direction;
     Interaction destinationInteraction;
+    private long lastWalkTime;
 
     public enum PlayerState {
         STANDING,
@@ -56,7 +58,6 @@ public class Player {
         direction = Direction.FORWARD;
         pos = new Vector2(rect.x, rect.y);
         destination = new Vector2(pos.x, pos.y);
-        lastPos = new Vector2(pos.x, pos.y);
     }
 
     private void SetupAnimations() {
@@ -76,8 +77,6 @@ public class Player {
     public void render(SpriteBatch spriteBatch) {
 
         Animate();
-
-
         spriteBatch.begin();
         spriteBatch.draw(currentFrame, pos.x, pos.y, rectangle.getWidth(), rectangle.getHeight());
         spriteBatch.end();
@@ -88,7 +87,6 @@ public class Player {
 
         switch (playerState) {
             case STANDING: {
-                //currentFrame = walkForwardAnim.getKeyFrame(animTime, true);
                 currentFrame = idleFrame;
                 break;
             }
@@ -105,7 +103,6 @@ public class Player {
                         destinationInteraction = null;
                     }
                 }
-
                 //Animate walk
                 switch (direction) {
                     case LEFT:
@@ -125,10 +122,20 @@ public class Player {
         }
     }
 
+    private void Move() {
+        long time = TimeUtils.nanoTime();
+        //Vector2.len()
+    }
+
     private void Interact() {
         if(destinationInteraction.getName().toString().equals("teleport")) {
             System.out.println("teleported");
-            gameScreen.LoadWorld(destinationInteraction.getParam());
+            gameScreen.LoadWorld((destinationInteraction.getParams())[0]);
+            int spawnPosX = Integer.parseInt((destinationInteraction.getParams())[1]);
+            int spawnPosY = Integer.parseInt((destinationInteraction.getParams())[2]);
+            Vector2 newPos = gameScreen.getWorld().GetTilePos(spawnPosX, spawnPosY);
+            if(newPos != null)
+                pos = newPos;
             //Teleport the player
         }
     }
@@ -148,11 +155,15 @@ public class Player {
             playerState = PlayerState.WALKING;
             destination = new Vector2(x - rectangle.width / 2, y);
         }
+        //Vector2 result = pos.lerp(new Vector2(x, y), 0.5f);
+        //pos = result;
     }
 
     public void Go(float x, float y, Interaction interaction) {
-        destinationInteraction = interaction;
-        Go(x, y);
+        if(playerState != PlayerState.WALKING) {
+            destinationInteraction = interaction;
+            Go(x, y);
+        }
     }
 
     public void Go(Tile tile) {

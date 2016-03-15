@@ -53,8 +53,10 @@ public class World {
         return layers[layer].TileCollisionCheck(rect);
     }
 
-    public Vector2 GetTilePos(int tileIndex) {
-        return layers[0].GetTilePos(tileIndex);
+    public Vector2 GetTilePos(int tileIndex) { return layers[0].GetTilePos(tileIndex); }
+
+    public Vector2 GetTilePos(int x, int y) {
+        return layers[0].GetTilePos(x, y);
     }
 
     public Tile GetTile(int layer, int tileIndex) { return layers[layer].GetTile(tileIndex); }

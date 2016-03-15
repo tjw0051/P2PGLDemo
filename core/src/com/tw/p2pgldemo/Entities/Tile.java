@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.tw.p2pgldemo.IO.Interaction;
+import org.w3c.dom.css.Rect;
 
 /**
  * Created by t_j_w on 08/03/2016.
@@ -15,7 +16,6 @@ public class Tile {
     private Rectangle rect;
     private Rectangle tileBoundingBox;
     private Rectangle textureRect;
-    private Vector2 scale;
     private Vector2 pos;
     private Vector2 layerIndex;
     private boolean isInteractive;
@@ -34,8 +34,6 @@ public class Tile {
     }
 
     public void SetPos(float x, float y) {
-        //tileBoundingBox.x = x;
-        //tileBoundingBox.y = y;
         this.pos.x = x;
         this.pos.y = y;
         this.rect.x = pos.x - tileBoundingBox.x;
@@ -43,10 +41,6 @@ public class Tile {
     }
 
     public Vector2 GetCenter() {
-        /*
-        return new Vector2(tileBoundingBox.x + (tileBoundingBox.width / 2),
-                tileBoundingBox.y + (tileBoundingBox.height / 2));
-                */
         return new Vector2(rect.x + (rect.width / 2), rect.y + (rect.height / 2));
     }
 
@@ -61,7 +55,11 @@ public class Tile {
         isInteractive = true;
     }
 
+    public Vector2 getLayerIndex() { return layerIndex; }
+
     public Rectangle GetRect() { return rect; }
+
+    public Rectangle GetBoundingBox() { return new Rectangle(rect.x, rect.y + tileBoundingBox.y /2, rect.width, tileBoundingBox.height ); }
 
     public Vector2 GetPos() { return pos; }
 

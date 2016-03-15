@@ -29,20 +29,10 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
-        game.assetManager.LoadInteractions();
         game.assetManager.LoadLevels();
         game.assetManager.LoadTextures();
         game.assetManager.LoadCharacters();
-        //game.assetManager.LoadLevel("a1");
-        //world  = new World("a1");
         LoadWorld("a1");
-        /*
-        tileLayer = new TileLayer(new Rectangle(0, 0, 100, 122), //50, 82, 75
-                new Rectangle(0, 0, 100, 170),
-                new Vector2(0, 0),
-                new Vector2(10, 10), AssetManager.LoadLevel("a1"), 0.7f);
-        tileLayer.SetPos(500, 100);
-        */
         player = new Player(new Rectangle(500, 500, 64, 96),
                 (Texture)game.assetManager.characterTextures.get("pirate"),
                 this);
@@ -92,32 +82,22 @@ public class GameScreen implements Screen {
         }
     }
 
-    public void LoadWorld(String worldName) {
-        world = new World(worldName);
-    }
+    public void LoadWorld(String worldName) { world = new World(worldName); }
+
+    public World getWorld() { return world; }
 
     @Override
-    public void resize(int width, int height) {
-
-    }
+    public void resize(int width, int height) { }
 
     @Override
-    public void pause() {
-
-    }
+    public void pause() { }
 
     @Override
-    public void resume() {
-
-    }
+    public void resume() { }
 
     @Override
-    public void hide() {
-
-    }
+    public void hide() { }
 
     @Override
-    public void dispose() {
-
-    }
+    public void dispose() { }
 }

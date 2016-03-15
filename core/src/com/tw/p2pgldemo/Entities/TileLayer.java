@@ -26,12 +26,6 @@ public class TileLayer {
     private java.util.List<Tile> tiles;
     private float scaling;
 
-    /**
-     * @param tileBoundingBox  Shape of tile
-     * @param textureRect   Shape of texture
-     * @param pos   position offset of entire layer
-     * @param cells Number of cells in layer
-     */
     public TileLayer(Rectangle tileBoundingBox, Rectangle textureRect,
                      Vector2 pos, Vector2 cells, String[] tileValues,
                      float scaling, java.util.List<Interaction> interactionList) {
@@ -54,19 +48,13 @@ public class TileLayer {
                 String tileValue = tileValues[tileValuesIter];
                 if(!tileValue.equals("0")) {
                     Texture tex = (Texture) aM.loadedTextures.get(tileValue);
-                    /*
-                    Rectangle textureShape = new Rectangle(textureRect.x * scaling, textureRect.y * scaling,
+                    Rectangle textureShape =
+                            new Rectangle(textureRect.x * scaling, textureRect.y * scaling,
                             textureRect.width * scaling, textureRect.height * scaling);
-                    Rectangle tileBoundingBox = new Rectangle(pos.x + ((x * this.tileBoundingBox.width + this.tileBoundingBox.x - this.tileBoundingBox.x) * scaling),
-                                                Gdx.graphics.getHeight() - (pos.y + (y * this.tileBoundingBox.height * scaling)) - textureRect.height,
-                                                this.tileBoundingBox.width * scaling,
-                                                this.tileBoundingBox.height * scaling);
-                                                */
-                    Rectangle textureShape = new Rectangle(textureRect.x * scaling, textureRect.y * scaling,
-                            textureRect.width * scaling, textureRect.height * scaling);
-                    Rectangle tileBounding = new Rectangle(tileBoundingBox.x * scaling, tileBoundingBox.y * scaling,
-                            tileBoundingBox.width * scaling, tileBoundingBox.height * scaling);
-                    Tile tile = new Tile(tileBounding, textureShape, tex, new Vector2(
+                    Rectangle tileBoundingBox =
+                            new Rectangle(this.tileBoundingBox.x * scaling, this.tileBoundingBox.y * scaling,
+                            this.tileBoundingBox.width * scaling, this.tileBoundingBox.height * scaling);
+                    Tile tile = new Tile(tileBoundingBox, textureShape, tex, new Vector2(
                             pos.x + (x * this.tileBoundingBox.width * scaling),
                             pos.y + (y * this.tileBoundingBox.height * scaling)),
                             new Vector2(x, y));
@@ -75,12 +63,6 @@ public class TileLayer {
                             tile.SetInteraction(interaction);
                         }
                     }
-                    /*
-                    if(AssetManager.GetInstance().interactions.containsKey(tileValue)) {
-                        tile.isInteractive = true;
-                        tile.interactionParams = (String[])AssetManager.GetInstance().interactions.get(tileValue);
-
-                    }*/
                     tiles.add(tile);
                 }
                 tileValuesIter++;
@@ -91,29 +73,11 @@ public class TileLayer {
     public void SetPos(float x, float y) {
         this.pos.x  = x;
         this.pos.y = y;
-        /*
-        int tileIter = 0;
-        for(int yy = 0; yy < cells.y; yy++) {
-            for (int xx = 0; xx < cells.x; xx++) {
-                tiles.get(tileIter).SetPos(pos.x + (xx * this.tileBoundingBox.width * scaling),
-                        pos.y + (yy * this.tileBoundingBox.height * scaling));
-                tileIter++;
-            }
-        } */
         for(int i = 0; i < tiles.size(); i ++) {
             Vector2 layerIndex = tiles.get(i).GetLayer();
             tiles.get(i).SetPos(pos.x + (layerIndex.x * this.tileBoundingBox.width * scaling),
                     pos.y + (layerIndex.y * this.tileBoundingBox.height * scaling));
         }
-
-        /*
-        for(int i = 0; i < tiles.size(); i++) {
-            tiles.get(i).SetPos(pos.x + (tiles.get(i).pos.x * tileBoundingBox.width * scaling),
-                    Gdx.graphics.getHeight() - (pos.y + (tiles.get(i).pos.y * tileBoundingBox.height * scaling)) - textureRect.height);
-
-        }
-        */
-
     }
 
     /** Check for a collision with a tile in the tile layer.
@@ -123,7 +87,7 @@ public class TileLayer {
     public int TileCollisionCheck(Rectangle collider) {
         //for(int i = 0; i < tiles.size(); i++) {
         for(int i = tiles.size(); i --> 0;) {
-            if (tiles.get(i).GetRect().overlaps(collider))
+            if (tiles.get(i).GetBoundingBox().overlaps(collider))
                 return i;
         }
         return -1;
@@ -133,18 +97,26 @@ public class TileLayer {
         return tiles.get(tileIndex).GetCenter();
     }
 
+    public Vector2 GetTilePos(int x, int y) {
+        for(int i = 0; i < tiles.size(); i++) {
+            if(tiles.get(i).getLayerIndex().x == x && tiles.get(i).getLayerIndex().y == y) {
+                return GetTilePos(i);
+            }
+        }
+        return null;
+    }
+
     public Tile GetTile(int tileIndex) { return tiles.get(tileIndex); }
 
-    public void render(SpriteBatch spriteBatch) {
-
-        spriteBatch.begin();
-       spriteBatch.end();
-
-        for(int i = 0; i < tiles.size(); i++) {
-            tiles.get(i).render(spriteBatch);
-        }
-    }
     private static float InvertHeight(float height) {
         return Gdx.graphics.getHeight() - height;
+    }
+
+    public void render(SpriteBatch spriteBatch) {
+        spriteBatch.begin();
+        spriteBatch.end();
+        for (int i = 0; i < tiles.size(); i++) {
+            tiles.get(i).render(spriteBatch);
+        }
     }
 }

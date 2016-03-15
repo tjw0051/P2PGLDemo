@@ -32,7 +32,9 @@ interactionList: [
     {
     name:teleport,
     pos:{x:4,z:1},
-    param:a2
+    params: [
+        a2,3,9,0
+    ]
     }
 ]
 }

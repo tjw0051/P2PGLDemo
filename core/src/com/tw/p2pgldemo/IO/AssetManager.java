@@ -39,21 +39,9 @@ public class AssetManager {
         Iterator iter = key.entrySet().iterator();
         while(iter.hasNext()) {
             Map.Entry entry = (Map.Entry) iter.next();
-            loadedTextures.put(entry.getKey(), new Texture(Gdx.files.internal("Textures/World/" + ((String[])entry.getValue())[1])));
+            loadedTextures.put(entry.getKey(),
+                    new Texture(Gdx.files.internal("Textures/World/" + ((String[])entry.getValue())[1])));
         }
-        /*
-        FileHandle file = Gdx.files.internal("Textures/World/TextureKey.txt");
-        String text = file.readString();
-        String[] splitText = text.split("\r\n");
-        loadedTextures = new HashMap();
-        for(int i = 0; i < splitText.length; i++) {
-            String [] keyValue = splitText[i].split("\\s+");
-            //Gdx.app.log("P2PGL", keyValue[0]);
-            //Gdx.app.log("P2PGL", keyValue[1]);
-            if(keyValue[1] != "0")
-                loadedTextures.put(keyValue[0], new Texture(Gdx.files.internal("Textures/World/" + keyValue[1])));
-        }
-        */
     }
 
     public void LoadCharacters() {
@@ -63,7 +51,8 @@ public class AssetManager {
         Iterator iter = key.entrySet().iterator();
         while(iter.hasNext()) {
             Map.Entry entry = (Map.Entry) iter.next();
-            characterTextures.put(entry.getKey(), new Texture(Gdx.files.internal("Textures/Characters/" + ((String[])entry.getValue())[1])));
+            characterTextures.put(entry.getKey(),
+                    new Texture(Gdx.files.internal("Textures/Characters/" + ((String[])entry.getValue())[1])));
         }
     }
 
@@ -78,11 +67,6 @@ public class AssetManager {
             file = Gdx.files.internal("Levels/" + ((String[])entry.getValue())[1]);
             text = file.readString();
             LevelData level = json.fromJson(LevelData.class, text);
-            //level.interactionList = new ArrayList<Interaction>();
-            //level.interactionList.add(new Interaction("teleport", new Vector3(4, 0, 1), "a2.txt"));
-            //String newlevel = json.toJson(level);
-            //System.out.println(json.toJson(level));
-
             levels.put(entry.getKey(), level);
         }
     }
@@ -91,7 +75,6 @@ public class AssetManager {
         interactions = LoadKey("Textures/World/InteractionKey.txt");
     }
 
-    //Returns <String, String[]>
     public static HashMap LoadKey(String filename) {
         FileHandle file = Gdx.files.internal(filename);
         String text = file.readString();
@@ -99,32 +82,12 @@ public class AssetManager {
         HashMap keyValuePair = new HashMap();
         for(int i = 0; i < splitText.length; i++) {
             String [] keyValue = splitText[i].split("\\s+");
-            //Gdx.app.log("P2PGL", keyValue[0]);
-            //Gdx.app.log("P2PGL", keyValue[1]);
             if(keyValue[1] != "0")
                 keyValuePair.put(keyValue[0], keyValue);
-                //keyValuePair.put(keyValue[0], keyValue[1]);
         }
         return keyValuePair;
     }
 
-    /*
-    public static String[][] LoadLevel(String filename) {
-        String level[][];
-
-        FileHandle file = Gdx.files.internal("Levels/" + filename);
-        String text = file.readString();
-
-        int noOfLayers = Integer.parseInt((text.split("\\s+", 2))[0]);
-        level = new String[noOfLayers][];
-        String layers = (text.split("\\s+", 2))[1];
-        for(int i = 0; i < noOfLayers; i++) {
-            String layer = layers.split("\r\n\r\n")[i];
-            level[i] = layer.split("\\s+");
-        }
-        return level;
-    }
-    */
     //TODO: test
     public void dispose() {
         grass.dispose();
