@@ -1,8 +1,11 @@
 package com.tw.p2pgldemo.Screens;
 
+import P2PGL.Connection;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g3d.particles.influencers.ColorInfluencer;
+import com.badlogic.gdx.math.RandomXS128;
 import com.tw.p2pgldemo.Game;
 
 /**
@@ -23,9 +26,12 @@ public class MainMenu implements Screen{
         Gdx.gl.glClearColor(1, 1, 1, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        if(Gdx.input.isTouched())
+        if(Gdx.input.isTouched()) {
+            int playerId = new RandomXS128().nextInt(100);
+            com.tw.p2pgldemo.Networking.Connection.GetInstance().Connect(Integer.toString(playerId));
             game.setScreen(new GameScreen(game));
             dispose();
+        }
     }
 
     @Override

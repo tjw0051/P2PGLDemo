@@ -8,8 +8,10 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.tw.p2pgldemo.IO.Interaction;
+import com.tw.p2pgldemo.Networking.PlayerState;
 import com.tw.p2pgldemo.Screens.GameScreen;
 
 import java.util.Set;
@@ -22,6 +24,7 @@ public class Player {
     static final float walkingSpeed = 0.5f;
     int layer = 1;
 
+    String name;
     GameScreen gameScreen;
     Rectangle rectangle;
     Texture texture;
@@ -49,10 +52,11 @@ public class Player {
         RIGHT
     }
 
-    public Player(Rectangle rect, Texture tex, GameScreen gameScreen) {
+    public Player(Rectangle rect, Texture tex, GameScreen gameScreen, String name) {
         this.gameScreen = gameScreen;
         this.rectangle = rect;
         this.texture = tex;
+        this.name = name;
         SetupAnimations();
         playerState = PlayerState.STANDING;
         direction = Direction.FORWARD;
@@ -98,6 +102,8 @@ public class Player {
                 if((int)pos.x == (int)destination.x && (int)pos.y == (int)destination.y) {
                     destination = pos;
                     playerState = PlayerState.STANDING;
+                    com.tw.p2pgldemo.Networking.Connection.GetInstance().SaveState("a1", new Vector3(pos.x, pos.y, 0),
+                            new Vector3(0,0,0));
                     if(destinationInteraction != null) {
                         Interact();
                         destinationInteraction = null;
@@ -125,6 +131,13 @@ public class Player {
     private void Move() {
         long time = TimeUtils.nanoTime();
         //Vector2.len()
+    }
+
+    public void Update(com.tw.p2pgldemo.Networking.PlayerState playerState) {
+        this.pos.x = playerState.getPos().x;
+        this.pos.y = playerState.getPos().y;
+        this.destination.x = playerState.getDestination().x;
+        this.destination.y = playerState.getDestination().y;
     }
 
     private void Interact() {
@@ -173,4 +186,20 @@ public class Player {
     }
 
     public int GetLayer() { return layer; }
+
+    public Vector3 GetPos() {
+        return new Vector3(pos.x, pos.y, layer);
+    }
+
+    public Vector3 GetDestination() { return new Vector3(destination.x, destination.y, layer); }
+
+    public String GetName() { return name; }
+
+    public com.tw.p2pgldemo.Networking.PlayerState GetState() {
+        return new com.tw.p2pgldemo.Networking.PlayerState(
+                name,
+                gameScreen.GetWorldName(),
+                GetPos(),
+                GetDestination());
+    }
 }

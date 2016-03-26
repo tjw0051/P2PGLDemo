@@ -16,7 +16,7 @@ import java.util.Map;
  * Loads assets and exposes them to the game.
  */
 public class AssetManager {
-    public static AssetManager assetManager = new AssetManager();
+    private static final AssetManager assetManager = new AssetManager();
     public static AssetManager GetInstance() { return assetManager; }
 
     public Texture grass;
@@ -25,7 +25,7 @@ public class AssetManager {
     public Map interactions;
     private Json json;
 
-    public AssetManager() {
+    private AssetManager() {
         json = new Json();
     }
 
