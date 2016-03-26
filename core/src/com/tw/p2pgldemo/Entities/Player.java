@@ -27,113 +27,65 @@ public class Player {
     String name;
     GameScreen gameScreen;
     Rectangle rectangle;
-    Texture texture;
-    Vector2 cellSize = new Vector2(32, 48);
-    Vector2 cells = new Vector2(4, 4);
-    TextureRegion[] walkLeftFrames, walkRightFrames,
-            walkForwardFrames, walkBackFrames;
-    TextureRegion idleFrame, currentFrame;
-    Animation walkLeftAnim, walkRightAnim, walkForwardAnim, walkBackAnim;
-    Vector2 pos, destination;
-    float animTime;
-    PlayerState playerState;
-    Direction direction;
-    Interaction destinationInteraction;
-    private long lastWalkTime;
 
-    public enum PlayerState {
+    TextureRegion currentFrame;
+
+    Vector2 pos, destination;
+
+    MovementState playerState;
+
+    Interaction destinationInteraction;
+    PlayerAnimation playerAnimation;
+
+    public enum MovementState {
         STANDING,
         WALKING
-    }
-    public enum Direction {
-        FORWARD,
-        BACKWARD,
-        LEFT,
-        RIGHT
     }
 
     public Player(Rectangle rect, Texture tex, GameScreen gameScreen, String name) {
         this.gameScreen = gameScreen;
         this.rectangle = rect;
-        this.texture = tex;
+        //this.texture = tex;
         this.name = name;
-        SetupAnimations();
-        playerState = PlayerState.STANDING;
-        direction = Direction.FORWARD;
+        playerAnimation = new PlayerAnimation(tex);
+        playerAnimation.SetupAnimations();
+        playerState = MovementState.STANDING;
         pos = new Vector2(rect.x, rect.y);
         destination = new Vector2(pos.x, pos.y);
     }
 
-    private void SetupAnimations() {
-        TextureRegion[][] allFrames = TextureRegion.split(texture, (int)cellSize.x, (int)cellSize.y);
-        idleFrame = new TextureRegion(allFrames[0][0]);
-        walkForwardFrames = new TextureRegion[] {allFrames[0][0], allFrames[0][1], allFrames[0][2], allFrames[0][3]};
-        walkLeftFrames = new TextureRegion[] {allFrames[1][0], allFrames[1][1], allFrames[1][2], allFrames[1][3]};
-        walkRightFrames = new TextureRegion[] {allFrames[2][0], allFrames[2][1], allFrames[2][2], allFrames[2][3]};
-        walkBackFrames = new TextureRegion[] {allFrames[3][0], allFrames[3][1], allFrames[3][2], allFrames[3][3]};
-        walkLeftAnim = new Animation(0.2f, walkLeftFrames);
-        walkRightAnim = new Animation(0.2f, walkRightFrames);
-        walkForwardAnim = new Animation(0.2f, walkForwardFrames);
-        walkBackAnim = new Animation(0.2f, walkBackFrames);
-        animTime = 0.0f;
-    }
-
     public void render(SpriteBatch spriteBatch) {
-
-        Animate();
-        spriteBatch.begin();
-        spriteBatch.draw(currentFrame, pos.x, pos.y, rectangle.getWidth(), rectangle.getHeight());
-        spriteBatch.end();
-    }
-
-    private void Animate() {
-        animTime += Gdx.graphics.getDeltaTime();
-
         switch (playerState) {
             case STANDING: {
-                currentFrame = idleFrame;
+                //currentFrame = idleFrame;
                 break;
             }
             case WALKING: {
-                CalculateDirection();
-                //Travelling to destination
+                //CalculateDirection();
                 pos.interpolate(destination, walkingSpeed, Interpolation.linear);
                 //Arrived at destination
                 if((int)pos.x == (int)destination.x && (int)pos.y == (int)destination.y) {
                     destination = pos;
-                    playerState = PlayerState.STANDING;
+                    playerState = MovementState.STANDING.STANDING;
+                    /*
                     com.tw.p2pgldemo.Networking.Connection.GetInstance().SaveState("a1", new Vector3(pos.x, pos.y, 0),
                             new Vector3(0,0,0));
+                    */
                     if(destinationInteraction != null) {
                         Interact();
                         destinationInteraction = null;
                     }
                 }
-                //Animate walk
-                switch (direction) {
-                    case LEFT:
-                        currentFrame = walkLeftAnim.getKeyFrame(animTime, true);
-                        break;
-                    case RIGHT:
-                        currentFrame = walkRightAnim.getKeyFrame(animTime, true);
-                        break;
-                    case FORWARD:
-                        currentFrame = walkForwardAnim.getKeyFrame(animTime, true);
-                        break;
-                    case BACKWARD:
-                        currentFrame = walkBackAnim.getKeyFrame(animTime, true);
-                }
                 break;
             }
         }
+        currentFrame = playerAnimation.Animate(playerState, pos, destination);
+        spriteBatch.begin();
+        spriteBatch.draw(currentFrame, pos.x, pos.y, rectangle.getWidth(), rectangle.getHeight());
+        spriteBatch.end();
     }
 
-    private void Move() {
-        long time = TimeUtils.nanoTime();
-        //Vector2.len()
-    }
-
-    public void Update(com.tw.p2pgldemo.Networking.PlayerState playerState) {
+    public void SetState(com.tw.p2pgldemo.Networking.PlayerState playerState) {
         this.pos.x = playerState.getPos().x;
         this.pos.y = playerState.getPos().y;
         this.destination.x = playerState.getDestination().x;
@@ -153,38 +105,29 @@ public class Player {
         }
     }
 
-    private void CalculateDirection() {
-        float xDiff = pos.x - destination.x;
-        float yDiff = pos.y - destination.y;
-        if(Math.abs(xDiff) > Math.abs(yDiff))//moving horizontally
-            direction = (pos.x > destination.x) ? Direction.LEFT : Direction.RIGHT;
-        else
-            direction = (pos.y > destination.y) ? Direction.FORWARD : Direction.BACKWARD;
-    }
+
 
     //Order player to walk to position
     public void Go(float x, float y) {
-        if(playerState != PlayerState.WALKING) {
-            playerState = PlayerState.WALKING;
+        if(playerState != MovementState.WALKING) {
+            playerState = MovementState.WALKING;
             destination = new Vector2(x - rectangle.width / 2, y);
         }
-        //Vector2 result = pos.lerp(new Vector2(x, y), 0.5f);
-        //pos = result;
     }
 
     public void Go(float x, float y, Interaction interaction) {
-        if(playerState != PlayerState.WALKING) {
+        if(playerState != MovementState.WALKING) {
             destinationInteraction = interaction;
             Go(x, y);
         }
     }
-
+/*
     public void Go(Tile tile) {
-        playerState = PlayerState.WALKING;
+        playerState = MovementState.WALKING;
         destination.x = tile.GetRect().x;
         destination.y = tile.GetRect().y;
     }
-
+*/
     public int GetLayer() { return layer; }
 
     public Vector3 GetPos() {

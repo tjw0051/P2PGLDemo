@@ -44,7 +44,7 @@ public class GameScreen implements Screen {
         game.assetManager.LoadLevels();
         game.assetManager.LoadTextures();
         game.assetManager.LoadCharacters();
-        LoadWorld(worldName);
+        world = new World(worldName);
         //Load player.
         player = CreatePlayer(500, 500, Connection.GetInstance().GetName());
         players = new ArrayList<Player>();
@@ -132,7 +132,7 @@ public class GameScreen implements Screen {
             boolean found = false;
             for(Player playerX : players) {
                 if(playerX.GetName().equals(playerStates.get(i).getName())) {
-                    playerX.Update(playerStates.get(i));
+                    playerX.SetState(playerStates.get(i));
                     found = true;
                 }
             }
@@ -144,7 +144,11 @@ public class GameScreen implements Screen {
         Connection.GetInstance().SendState(player.GetState());
     }
 
-    public void LoadWorld(String worldName) { world = new World(worldName); }
+    public void LoadWorld(String worldName) {
+        this.worldName = worldName;
+        Connection.GetInstance().SaveState(worldName, player.GetPos(), new Vector3(1,2,3));
+        world = new World(worldName);
+    }
 
     public World getWorld() { return world; }
 
