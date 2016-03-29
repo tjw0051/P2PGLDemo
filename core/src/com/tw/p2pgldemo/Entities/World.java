@@ -1,5 +1,6 @@
 package com.tw.p2pgldemo.Entities;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
@@ -15,21 +16,29 @@ import java.util.List;
  */
 public class World {
 
+    private final Rectangle tileBoundiing = new Rectangle(0, 100, 100, 80);
+    private final Rectangle tileTexRect = new Rectangle(0, 0, 100, 170);
+    private final float levelScale = 0.7f;
+
     private TileLayer[] layers;
     private LevelData levelData;
+    Vector2 pos;
 
     public World(String levelName) {
         //String[][] layerValues = AssetManager.LoadLevel(levelName);
         levelData = (LevelData)AssetManager.GetInstance().levels.get(levelName);
         String[][] layerValues = levelData.GetTileValues();
         layers = new TileLayer[layerValues.length];
+        pos = new Vector2(Gdx.graphics.getWidth()/2 - (levelData.GetLevelWidth() * (tileTexRect.width*levelScale))/2,
+                          (tileTexRect.height) + 30);//Gdx.graphics.getHeight()/2 - 300); //- (levelData.getLevelHeight() * (tileTexRect.height*levelScale))/2);
 
         for(int i = 0; i < layerValues.length; i++) {
-            layers[i] = new TileLayer(new Rectangle(0, 100, 100, 80), //50, 82, 75 //122
-                    new Rectangle(0, 0, 100, 170),
+            layers[i] = new TileLayer(tileBoundiing, //50, 82, 75 //122
+                    tileTexRect,
                     new Vector2(0, 0),
-                    new Vector2(10, 10), layerValues[i], 0.7f, GetInteractions(i));
-            layers[i].SetPos(500, 300 + (i * -30));
+                    new Vector2(levelData.GetLevelWidth(), levelData.getLevelHeight()), layerValues[i], levelScale, GetInteractions(i));
+            //layers[i].SetPos(500, 300 + (i * -30));
+            layers[i].SetPos(pos.x, pos.y + (i * -30));
         }
     }
 

@@ -23,6 +23,7 @@ public class AssetManager {
     public Map loadedTextures, characterTextures; //String, Texture
     public Map levels; // String, String[][]
     public Map interactions;
+    public Map ui;
     private Json json;
 
     private AssetManager() {
@@ -68,6 +69,17 @@ public class AssetManager {
             text = file.readString();
             LevelData level = json.fromJson(LevelData.class, text);
             levels.put(entry.getKey(), level);
+        }
+    }
+
+    public void LoadUI() {
+        ui = new HashMap();
+        HashMap key = LoadKey("UI/UIKey.txt");
+        Iterator iter = key.entrySet().iterator();
+        while(iter.hasNext()) {
+            Map.Entry entry = (Map.Entry) iter.next();
+            ui.put(entry.getKey(),
+                    new Texture(Gdx.files.internal("UI/" + ((String[])entry.getValue())[1])));
         }
     }
 

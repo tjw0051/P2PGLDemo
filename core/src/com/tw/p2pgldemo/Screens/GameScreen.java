@@ -12,10 +12,12 @@ import com.tw.p2pgldemo.Entities.Tile;
 import com.tw.p2pgldemo.Entities.World;
 import com.tw.p2pgldemo.Game;
 import com.tw.p2pgldemo.Entities.Player;
+import com.tw.p2pgldemo.IO.AssetManager;
 import com.tw.p2pgldemo.Networking.Connection;
 import com.tw.p2pgldemo.Networking.PlayerState;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -28,29 +30,33 @@ public class GameScreen implements Screen {
     private Player player;
     private List<Player> players;
     private World world;
-    private String worldName = "a1";
+    private Menu menu;
+    private String worldName = "a5";
     private long lastStateTime;
 
-    public GameScreen(Game game) {
+    public GameScreen(Game game, String playerName, String playerTextureName) {
         this.game = game;
-
 
         //Set up camera
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         //Load Assets
+        game.assetManager.LoadUI();
         game.assetManager.LoadWorldAssets();
         game.assetManager.LoadLevels();
         game.assetManager.LoadTextures();
         game.assetManager.LoadCharacters();
+
+        menu = new Menu();
         world = new World(worldName);
         //Load player.
-        player = CreatePlayer(500, 500, Connection.GetInstance().GetName());
+        player = CreatePlayer(500, 500, playerName, playerTextureName);
         players = new ArrayList<Player>();
         //Save player state to DHT
-        Connection.GetInstance().SaveState(worldName, player.GetPos(), new Vector3(1,2,3));
-        Connection.GetInstance().ConnectLocalPlayers();
+        Connection.GetInstance().JoinWorld(worldName);
+        //Connection.GetInstance().SaveState(player.GetState());
+        //Connection.GetInstance().ConnectLocalPlayers();
         lastStateTime = System.currentTimeMillis();
         /*
         List<PlayerState> states = Connection.GetInstance().GetPlayerStates();
@@ -63,10 +69,10 @@ public class GameScreen implements Screen {
         */
     }
 
-    private Player CreatePlayer(float x, float y, String playerName) {
+    private Player CreatePlayer(float x, float y, String playerName, String playerTextureName) {
         return new Player(new Rectangle(x, y, 64, 96),
-                    (Texture)game.assetManager.characterTextures.get("pirate"),
-                    this, playerName);
+                (Texture)AssetManager.GetInstance().characterTextures.get(playerTextureName),
+                    this, playerName, playerTextureName);
     }
 
     @Override
@@ -92,42 +98,80 @@ public class GameScreen implements Screen {
         game.batch.begin();
         game.batch.end();
 
-        processInput();
-        if(System.currentTimeMillis() - lastStateTime > 1000) {
+        ProcessInput();
+        if(System.currentTimeMillis() - lastStateTime > 400) {
             UpdatePlayerStates();
             lastStateTime = System.currentTimeMillis();
             //Connection.GetInstance().SendState(worldName, player.GetPos(), player.GetDestination());
         }
-
-
+        menu.render(game.batch);
     }
 
-    private void processInput() {
-        if(Gdx.input.isTouched()) {
-            //int tileGroundCollision = tileLayer.TileCollisionCheck(new Rectangle(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY(), 1, 1));
-            int tileGroundCollision = world.TileCollisionCheck(
-                    new Rectangle(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY(), 1, 1),
-                    player.GetLayer() - 1);
-            if(tileGroundCollision != -1) {
-                Vector2 tileCenterPos = world.GetTilePos(tileGroundCollision);
+    private void ProcessInput() {
+        Rectangle cursorRect = new Rectangle(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY(), 1, 1);
 
-                int tileCollision = world.TileCollisionCheck(
-                        new Rectangle(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY(), 1, 1),
-                        player.GetLayer());
-                if(tileCollision != -1) {
-                    Tile tile = world.GetTile(player.GetLayer(), tileCollision);
-                    if(tile.isInteractive()) {
-                        player.Go(tileCenterPos.x, tileCenterPos.y, tile.GetInteraction());
+        if(Gdx.input.justTouched()) {
+            //Player clicked menu component
+            if(menu.ProcessInput(cursorRect)) {}
+            //Player clicked world component
+            else {
+                //Check the player has clicked a tile block
+                int tileGroundCollision = world.TileCollisionCheck(cursorRect, player.GetLayer() - 1);
+                //If player has clicked a tile...
+                if (tileGroundCollision != -1) {
+                    Vector2 tileCenterPos = world.GetTilePos(tileGroundCollision);
+                    int tileCollision = world.TileCollisionCheck(cursorRect, player.GetLayer());
+                    //Player clicked an object on layer 2
+                    if (tileCollision != -1) {}
+                    else {
+                        Tile tile = world.GetTile(player.GetLayer() - 1, tileGroundCollision);//tileCollision);
+                        if (tile.isInteractive())
+                            player.Go(tileCenterPos.x, tileCenterPos.y, tile.GetInteraction());
+                            //}
+                        else
+                            player.Go(tileCenterPos.x, tileCenterPos.y, null);
                     }
                 }
-                else
-                    player.Go(tileCenterPos.x, tileCenterPos.y);
             }
         }
     }
 
     private void UpdatePlayerStates() {
         List<PlayerState> playerStates = Connection.GetInstance().GetStatesFromUDP();
+        Iterator playersIter = players.iterator();
+        Iterator stateIter = playerStates.iterator();
+
+        //Iterate through players
+        while(playersIter.hasNext()) {
+            boolean found = false;
+            Player player = (Player) playersIter.next();
+
+            //Iterate through player states
+            while(stateIter.hasNext()) {
+                PlayerState state = (PlayerState) stateIter.next();
+                //If a state for player is found, update the player's state.
+                if(state.getName().equals(player.GetName())) {
+                    player.SetState(state);
+                    stateIter.remove();
+                    found = true;
+                }
+            }
+            //If no new state is found for the player, update its timeout counter
+            if(found == false) {
+                player.playerTimeoutTick++;
+                //If timeout counter is over 3, remove player
+                if(player.playerTimeoutTick > 2)
+                    playersIter.remove();
+            }
+        }
+        //Loop through the remaining states and create new players for each.
+        for(PlayerState state : playerStates) {
+            Vector3 playerPos = state.getPos();
+            players.add(CreatePlayer(playerPos.x, playerPos.y,
+                    state.getName(), state.getTextureName()));
+        }
+
+        /*
         for(int i = 0; i < playerStates.size(); i++) {
             boolean found = false;
             for(Player playerX : players) {
@@ -138,16 +182,28 @@ public class GameScreen implements Screen {
             }
             if(!found) {
                 Vector3 playerPos = playerStates.get(i).getPos();
-                players.add(CreatePlayer(playerPos.x, playerPos.y, playerStates.get(i).getName()));
+                players.add(CreatePlayer(playerPos.x, playerPos.y,
+                        playerStates.get(i).getName(), playerStates.get(i).getTextureName()));
             }
         }
+        */
+        //Send this player's state
         Connection.GetInstance().SendState(player.GetState());
     }
 
     public void LoadWorld(String worldName) {
         this.worldName = worldName;
-        Connection.GetInstance().SaveState(worldName, player.GetPos(), new Vector3(1,2,3));
+        //Connection.GetInstance().SaveState(player.GetState());
+        Connection.GetInstance().JoinWorld(worldName);
         world = new World(worldName);
+    }
+
+    public void Teleport(String worldName) {
+        this.worldName = worldName;
+        LoadWorld(worldName);
+        players.clear();
+        //Connection.GetInstance().SaveState(player.GetState());
+        //Connection.GetInstance().ConnectLocalPlayers();
     }
 
     public World getWorld() { return world; }

@@ -46,7 +46,7 @@ public class ConnectionTest {
             return -1;
         }
 
-        if(connection.Connect("client") == -1) {
+        if(connection.Connect("client", "worldName") == -1) {
             fail("Failed to connect to server.");
             return -1;
         }
@@ -89,7 +89,7 @@ public class ConnectionTest {
         String world = "a1";
         Vector3 pos = new Vector3(1, 2, 3);
         Vector3 dest = new Vector3(4, 5, 6);
-        if(connection.SaveState(world, pos, dest) != 0)
+        if(connection.SendState(new PlayerState("name", "texName", world, pos, dest)) != 0)
             return -1;
         return 0;
     }

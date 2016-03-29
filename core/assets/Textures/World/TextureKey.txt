@@ -7,3 +7,4 @@
 7 StoneBlock.png
 8 ChestClosed.png
 9 Selector.png
+10 SelectorBlock.png

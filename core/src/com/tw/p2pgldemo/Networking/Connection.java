@@ -26,7 +26,7 @@ public class Connection implements MessageReceivedListener{
     public static Connection GetInstance() { return connection; }
 
     private P2PGL.Connection conn;
-    private UDPChannel udpChannel;
+    //private UDPChannel udpChannel;
     private Json json;
     private String name;
     private P2PGL.Profile.Profile profile;
@@ -36,17 +36,19 @@ public class Connection implements MessageReceivedListener{
     private Connection() {
         json = new Json();
         localPlayerStates = new ArrayList<PlayerState>();
+
     }
 
     /** Create profile with random name from 0-100. Connect to server.
      *  Listen on UDP channel (Connection() channel + 1)
      * @param name  name of player.
      */
-    public int Connect(String name) {
+    public int Connect(String name, String worldName) {
         int err = 0;
         this.name = name;
-        err = ConnectDHT();
-        ConnectUDP();
+        err = ConnectDHT(worldName);
+        conn.AddMessageListener(this);
+        //ConnectUDP();
 
         return err;
     }
@@ -54,41 +56,50 @@ public class Connection implements MessageReceivedListener{
     public int Disconnect() {
         try {
             conn.Disconnect();
-            udpChannel.Stop();
+            //udpChannel.Stop();
         } catch(IOException ioe) {
             return -1;
         }
         return 0;
     }
 
-    private int ConnectDHT() {
+    public void JoinWorld(String worldName) {
+        try {
+            conn.StartUDPChannel(worldName);
+            localPlayerStates.clear();
+        } catch (IOException ioe) {
+            System.out.println("Error changing UDP Channel");
+        }
+    }
+
+    private int ConnectDHT(String worldName) {
         int port = new RandomXS128().nextInt(100);
         //profile = new Profile(InetAddress.getLoopbackAddress(), 4000 + port, name);
         profile = new Profile(InetAddress.getLoopbackAddress(), 4000 + port, name);
+        profile.SetUDPChannel(worldName);
         conn = new P2PGL.Connection(profile, new KademliaFacade());
         try {
             conn.Connect("server", InetAddress.getLoopbackAddress(), 4000);
-            conn.StoreProfile();
             return 0;
         } catch (IOException ioe) {
             Gdx.app.log("Error", "Unable to connect to server");
             return -1;
         }
     }
-
+    /*
     private void ConnectUDP() {
         udpChannel = new UDPChannel(profile, profile.GetUDPPort());
         udpChannel.addListener(this);
         udpChannel.Listen();
     }
-
+    */
     /** Save the players state at [name] + "STATE"
-     * @param world
-     * @param pos
-     * @param destination
+     * @param playerState
      */
-    public int SaveState(String world, Vector3 pos, Vector3 destination) {
-        playerState = new PlayerState(name, world, pos, destination);
+    /*
+    public int SaveState(PlayerState playerState) {
+        this.playerState = playerState;
+        //playerState = new PlayerState(name, world, pos, destination);
         try {
             conn.Store(new Key(name + "STATE"), json.toJson(playerState));
         } catch (IOException ioe) {
@@ -97,17 +108,14 @@ public class Connection implements MessageReceivedListener{
         }
         return 0;
     }
-
-    public int SendState(String world, Vector3 pos, Vector3 destination) {
-        return SendState(new PlayerState(name, world, pos, destination));
-    }
-
+    */
     public int SendState(PlayerState playerState) {
         this.playerState = playerState;
         try {
-            udpChannel.Broadcast(playerState, PlayerState.class);
+            conn.Broadcast(playerState, PlayerState.class);
         } catch(IOException ioe) {
-            DiagnoseIOE(ioe);
+            Gdx.app.log("Error", "Error sending state");
+            //DiagnoseIOE(ioe);
         }
         return 0;
     }
@@ -126,10 +134,11 @@ public class Connection implements MessageReceivedListener{
         }
         return null;
     }
-
+    /*
     public void ConnectLocalPlayers() {
         //Get all player profiles from DHT.
-
+        udpChannel.ClearContacts();
+        udpChannel.ClearQueue();
         try {
             IKey[] users = conn.ListUsers();
             System.out.println("Users found: " + users.length);
@@ -164,9 +173,7 @@ public class Connection implements MessageReceivedListener{
         e.printStackTrace();
     }
 
-    public List<PlayerState> GetStatesFromUDP() {
-        return localPlayerStates;
-    }
+
 
     public List<PlayerState> GetStatesFromDHT(List<IProfile> profiles) {
         List<PlayerState> states = new ArrayList<PlayerState>();
@@ -187,20 +194,35 @@ public class Connection implements MessageReceivedListener{
         }
         return states;
     }
+    */
 
-    public void MessageReceived(String messageType, IKey key) {
+    public List<PlayerState> GetStatesFromUDP() {
+        return localPlayerStates;
+    }
+
+    public void MessageReceivedListener(String messageType, IKey key) {
         try {
             if (messageType.equals("com.tw.p2pgldemo.Networking.PlayerState")) {
-                if(!udpChannel.Contains(key)) {
-                    try {
-                        System.out.println("adding new profile");
+                PlayerState state = (PlayerState) conn.GetUDPChannel().ReadNext();
+                System.out.println("adding state: " + state.getName() + " world: " + state.getWorld());
+                localPlayerStates.add(state);
 
-                        udpChannel.Add(conn.GetProfile(key));
-                    } catch (IOException ioe) {
-                        System.out.println("Cannot get profile for unknown UDP client");
+
+                /*
+                if(state.getWorld().equals(playerState.getWorld())) {
+                    localPlayerStates.add(state);
+                    if (!udpChannel.Contains(key)) {
+                        try {
+                            System.out.println("adding new profile");
+
+                            udpChannel.Add(conn.GetProfile(key));
+                        } catch (IOException ioe) {
+                            System.out.println("Cannot get profile for unknown UDP client");
+                        }
                     }
                 }
-                localPlayerStates.add((PlayerState) udpChannel.ReadNext());
+                */
+
             }
         } catch(ClassNotFoundException cnfe) {
         }

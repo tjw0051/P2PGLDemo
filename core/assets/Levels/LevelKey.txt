@@ -1,2 +1,9 @@
 a1 a1.txt
 a2 a2.txt
+a3 a3.txt
+a4 a4.txt
+a5 a5.txt
+a6 a6.txt
+a7 a7.txt
+a8 a8.txt
+a9 a9.txt

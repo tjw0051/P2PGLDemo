@@ -1,1 +1,6 @@
 pirate pirate.png
+indianajones indianajones.png
+jael jael.png
+killer killer.png
+pirate2 pirate2.png
+steampunk steampunk.png

@@ -35,4 +35,9 @@ public class LevelData {
         }
         return null;
     }
+
+    public int GetLevelWidth() { return levelWidth; }
+
+    public int getLevelHeight() { return levelHeight; }
+
 }
