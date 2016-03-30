@@ -80,6 +80,8 @@ public class Player {
                 if(Vector2.dst(pos.x, pos.y, destination.x, destination.y) <= 1) {
                     //pos = destination;
                     playerState = MovementState.STANDING.STANDING;
+                    pos.x = destination.x;
+                    pos.y = destination.y;
                     /*
                     com.tw.p2pgldemo.Networking.Connection.GetInstance().SaveState("a1", new Vector3(pos.x, pos.y, 0),
                             new Vector3(0,0,0));
@@ -105,6 +107,9 @@ public class Player {
         this.pos.y = playerState.getPos().y;
         this.destination.x = playerState.getDestination().x;
         this.destination.y = playerState.getDestination().y;
+        if(!pos.equals(destination)) {
+            this.playerState = MovementState.WALKING;
+        }
         this.playerTimeoutTick = 0;
     }
 
