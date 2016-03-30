@@ -2,21 +2,14 @@ package com.tw.p2pgldemo.Entities;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.utils.TimeUtils;
 import com.tw.p2pgldemo.IO.Interaction;
-import com.tw.p2pgldemo.Networking.PlayerState;
 import com.tw.p2pgldemo.Screens.GameScreen;
-
-import java.awt.*;
-import java.util.Set;
 
 /**
  * 2D Animation with libGDX: https://github.com/libgdx/libgdx/wiki/2D-Animation
@@ -121,7 +114,9 @@ public class Player {
             Vector2 newPos = gameScreen.getWorld().GetTilePos(spawnPosX, spawnPosY);
             if(newPos != null)
                 pos = newPos;
-            //Teleport the player
+        }
+        if(destinationInteraction.getName().toString().equals("pickup")) {
+            gameScreen.ProcessInteraction(destinationInteraction);
         }
     }
 

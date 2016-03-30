@@ -5,11 +5,13 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.ui.List;
 import com.tw.p2pgldemo.IO.AssetManager;
 import com.tw.p2pgldemo.IO.Interaction;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Created by t_j_w on 08/03/2016.
@@ -104,6 +106,17 @@ public class TileLayer {
             }
         }
         return null;
+    }
+
+    public void RemoveTileAt(Vector3 tilePos) {
+        Iterator iter = tiles.iterator();
+        while(iter.hasNext()) {
+            Tile t = (Tile)iter.next();
+            if(t.getLayerIndex().x == tilePos.x && t.getLayerIndex().y == tilePos.y) {
+                iter.remove();
+                break;
+            }
+        }
     }
 
     public Tile GetTile(int tileIndex) { return tiles.get(tileIndex); }

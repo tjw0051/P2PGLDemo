@@ -86,11 +86,11 @@ interactionList: [
         ]
     },
     {
-            name:pickup,
-            pos:{x:2,y:7,z:0},
-            params: [
-                star
-            ]
-        }
+        name:pickup,
+        pos:{x:2,y:7,z:0},
+        params: [
+            star
+        ]
+    }
 ]
 }

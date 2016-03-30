@@ -13,8 +13,11 @@ import com.tw.p2pgldemo.Entities.World;
 import com.tw.p2pgldemo.Game;
 import com.tw.p2pgldemo.Entities.Player;
 import com.tw.p2pgldemo.IO.AssetManager;
+import com.tw.p2pgldemo.IO.Interaction;
+import com.tw.p2pgldemo.IO.LevelData;
 import com.tw.p2pgldemo.Networking.Connection;
 import com.tw.p2pgldemo.Networking.PlayerState;
+import com.tw.p2pgldemo.Networking.StarCollectedMsg;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -49,24 +52,14 @@ public class GameScreen implements Screen {
         game.assetManager.LoadCharacters();
 
         menu = new Menu();
-        world = new World(worldName);
+        //world = new World(worldName);
+        LoadWorld(worldName);
         //Load player.
         player = CreatePlayer(500, 500, playerName, playerTextureName);
         players = new ArrayList<Player>();
         //Save player state to DHT
-        Connection.GetInstance().JoinWorld(worldName);
-        //Connection.GetInstance().SaveState(player.GetState());
-        //Connection.GetInstance().ConnectLocalPlayers();
+        //Connection.GetInstance().JoinWorld(worldName);
         lastStateTime = System.currentTimeMillis();
-        /*
-        List<PlayerState> states = Connection.GetInstance().GetPlayerStates();
-        players = new ArrayList<Player>();
-        for(PlayerState state: states) {
-            players.add(new Player(new Rectangle(state.getPos().x, state.getPos().y, 64, 96),
-                    (Texture)game.assetManager.characterTextures.get("pirate"),
-                    this, "insert_name_here"));
-        }
-        */
     }
 
     private Player CreatePlayer(float x, float y, String playerName, String playerTextureName) {
@@ -101,6 +94,7 @@ public class GameScreen implements Screen {
         ProcessInput();
         if(System.currentTimeMillis() - lastStateTime > 400) {
             UpdatePlayerStates();
+            UpdateStars();
             lastStateTime = System.currentTimeMillis();
             //Connection.GetInstance().SendState(worldName, player.GetPos(), player.GetDestination());
         }
@@ -134,6 +128,20 @@ public class GameScreen implements Screen {
                 }
             }
         }
+    }
+
+    private void UpdateStars() {
+        List<StarCollectedMsg> starMessages = Connection.GetInstance().GetStarMessages();
+        if(starMessages == null)
+            return;
+        Iterator iter = starMessages.iterator();
+        while(iter.hasNext()) {
+            StarCollectedMsg starMessage = (StarCollectedMsg)iter.next();
+            starMessage.GetPos().z = starMessage.GetPos().z + 1;
+            getWorld().RemoveTileAt(starMessage.GetPos());
+            iter.remove();
+        }
+        Connection.GetInstance().GetStarMessages().clear();
     }
 
     private void UpdatePlayerStates() {
@@ -194,16 +202,32 @@ public class GameScreen implements Screen {
     public void LoadWorld(String worldName) {
         this.worldName = worldName;
         //Connection.GetInstance().SaveState(player.GetState());
-        Connection.GetInstance().JoinWorld(worldName);
-        world = new World(worldName);
+        LevelData netData = Connection.GetInstance().JoinWorld(worldName);
+        if(netData != null)
+            world = new World(netData);
+        else
+            world = new World(worldName);
     }
 
     public void Teleport(String worldName) {
         this.worldName = worldName;
+        Connection.GetInstance().SetWorld(world.GetLevelData());
         LoadWorld(worldName);
         players.clear();
         //Connection.GetInstance().SaveState(player.GetState());
         //Connection.GetInstance().ConnectLocalPlayers();
+    }
+
+    public void ProcessInteraction(Interaction interaction) {
+        if(interaction.getName().equals("pickup")) {
+            if(interaction.getParams()[0].equals("star")) {
+                System.out.println("Player hit star");
+                getWorld().RemoveTileAt(new Vector3(interaction.getPos().x,
+                        interaction.getPos().y, interaction.getPos().z+1));
+                Connection.GetInstance().StarCollected(interaction.getPos());
+                //Connection.GetInstance().SetWorld(world.GetLevelData());
+            }
+        }
     }
 
     public World getWorld() { return world; }

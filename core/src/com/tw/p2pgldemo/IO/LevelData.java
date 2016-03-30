@@ -27,6 +27,10 @@ public class LevelData {
         return tileValues;
     }
 
+    public void SetTileValue(int x, int y, int layer, String value) {
+        tileValues[layer][y*GetLevelWidth() + x] = value;
+    }
+
     public Interaction GetInteraction(int x, int y, int layer) {
         for (Interaction interaction : interactionList) {
             if(interaction.getPos().x == x && interaction.getPos().y == y && interaction.getPos().z == layer) {
@@ -39,5 +43,7 @@ public class LevelData {
     public int GetLevelWidth() { return levelWidth; }
 
     public int getLevelHeight() { return levelHeight; }
+
+    public String GetName() { return name; }
 
 }
