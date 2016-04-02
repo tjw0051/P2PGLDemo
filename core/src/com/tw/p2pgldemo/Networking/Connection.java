@@ -1,19 +1,19 @@
 package com.tw.p2pgldemo.Networking;
 
 
-import P2PGL.*;
+import P2PGL.ConnectionFactory;
+import P2PGL.Connection.IHybridConnection;
 import P2PGL.DHT.KademliaFacade;
-import P2PGL.UDP.*;
 import P2PGL.Profile.*;
 import P2PGL.EventListener.MessageReceivedListener;
+import P2PGL.Util.IKey;
+import P2PGL.Util.Key;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Json;
-import com.tw.p2pgldemo.Entities.Player;
 import com.tw.p2pgldemo.IO.LevelData;
 
-import java.io.Console;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -26,8 +26,7 @@ public class Connection implements MessageReceivedListener{
     private static final Connection connection = new Connection();
     public static Connection GetInstance() { return connection; }
 
-    private P2PGL.Connection conn;
-    //private UDPChannel udpChannel;
+    private IHybridConnection conn;
     private Json json;
     private String name;
     private P2PGL.Profile.Profile profile;
@@ -67,7 +66,7 @@ public class Connection implements MessageReceivedListener{
 
     public LevelData JoinWorld(String worldName) {
         try {
-            conn.StartUDPChannel(worldName);
+            conn.JoinLocalChannel(worldName);
             localPlayerStates.clear();
             return GetWorld(worldName);
         } catch (IOException ioe) {
@@ -100,9 +99,10 @@ public class Connection implements MessageReceivedListener{
     private int ConnectDHT(String worldName) {
         int port = new RandomXS128().nextInt(100);
         profile = new Profile(InetAddress.getLoopbackAddress(), 4000 + port, name);
-        profile.SetUDPChannel(worldName);
+        profile.SetLocalChannel(worldName);
 
-        conn = new P2PGL.Connection(profile, new KademliaFacade());
+        //conn = KademliaConnectionFactory.Get(profile); //new P2PGL.Connection(profile, new KademliaFacade());
+        conn = ConnectionFactory.GetHybridConnection(profile);
         try {
             conn.Connect("server", InetAddress.getLoopbackAddress(), 4000);
             return 0;
@@ -137,8 +137,6 @@ public class Connection implements MessageReceivedListener{
      */
     public PlayerState GetState(String playerName) {
         try {
-            //String jsonState = conn.Get(new Key(playerName + "STATE"));
-            //return json.fromJson(PlayerState.class, jsonState);
             return conn.Get(new Key(playerName + "STATE"), PlayerState.class);
 
         } catch (IOException ioe) {
@@ -156,7 +154,6 @@ public class Connection implements MessageReceivedListener{
     public List<StarCollectedMsg> GetStarMessages() { return starMessages; }
 
     public void MessageReceivedListener(Object obj, Class messageType, IKey key) {
-        //try {
             if(messageType.equals(PlayerState.class)) {
                 System.out.println("PlayerState received");
                 localPlayerStates.add((PlayerState)obj);
@@ -165,23 +162,6 @@ public class Connection implements MessageReceivedListener{
                 System.out.println("Star received");
                 starMessages.add((StarCollectedMsg)obj);
             }
-
-            /*
-            if (messageType.equals("com.tw.p2pgldemo.Networking.PlayerState")) {
-                PlayerState state = (PlayerState) conn.GetUDPChannel().ReadNext();
-                System.out.println("adding state: " + state.getName() + " world: " + state.getWorld());
-                localPlayerStates.add(state);
-            }
-            if(messageType.equals(StarCollectedMsg.class.getTypeName())) {
-                StarCollectedMsg starMsg = (StarCollectedMsg) conn.GetUDPChannel().ReadNext();
-                if(starMsg != null)
-                    starMessages.add(starMsg);
-            }
-            else
-                Gdx.app.log("Error", "Unknown message: " + messageType);
-                */
-        //} catch(ClassNotFoundException cnfe) {
-        //}
     }
 
     public String GetName() {

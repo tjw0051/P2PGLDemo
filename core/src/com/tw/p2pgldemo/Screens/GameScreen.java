@@ -178,23 +178,6 @@ public class GameScreen implements Screen {
             players.add(CreatePlayer(playerPos.x, playerPos.y,
                     state.getName(), state.getTextureName()));
         }
-
-        /*
-        for(int i = 0; i < playerStates.size(); i++) {
-            boolean found = false;
-            for(Player playerX : players) {
-                if(playerX.GetName().equals(playerStates.get(i).getName())) {
-                    playerX.SetState(playerStates.get(i));
-                    found = true;
-                }
-            }
-            if(!found) {
-                Vector3 playerPos = playerStates.get(i).getPos();
-                players.add(CreatePlayer(playerPos.x, playerPos.y,
-                        playerStates.get(i).getName(), playerStates.get(i).getTextureName()));
-            }
-        }
-        */
         //Send this player's state
         Connection.GetInstance().SendState(player.GetState());
     }
@@ -222,6 +205,7 @@ public class GameScreen implements Screen {
         if(interaction.getName().equals("pickup")) {
             if(interaction.getParams()[0].equals("star")) {
                 System.out.println("Player hit star");
+                menu.IncrementScore();
                 getWorld().RemoveTileAt(new Vector3(interaction.getPos().x,
                         interaction.getPos().y, interaction.getPos().z+1));
                 Connection.GetInstance().StarCollected(interaction.getPos());

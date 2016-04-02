@@ -3,6 +3,7 @@ package com.tw.p2pgldemo.Screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.tw.p2pgldemo.Entities.UI.*;
@@ -12,9 +13,11 @@ import com.tw.p2pgldemo.Entities.UI.*;
  */
 public class Menu {
     //Texture menuButton, exitButton;
-    Rectangle menuButtonRect, exitButtonRect;
-    MenuState menuState;
-    Button menuButton, exitButton;
+    private Rectangle menuButtonRect, exitButtonRect;
+    private MenuState menuState;
+    private BitmapFont font;
+    private Button menuButton, exitButton;
+    private int score;
 
     private enum MenuState {
         OPEN,
@@ -22,12 +25,16 @@ public class Menu {
     }
 
     public Menu() {
+        score = 0;
         menuButton = new Button("menubutton", 0, 0, 0.7f);
         menuButton.SetPos(Gdx.graphics.getWidth() - menuButton.GetRect().getWidth(),
                 Gdx.graphics.getHeight() - menuButton.GetRect().getHeight());
 
         exitButton = new Button("exitbutton", 0, 0, 0.7f);
         exitButton.SetCenterPos(Gdx.graphics.getWidth()/2, Gdx.graphics.getHeight()/2);
+
+        font = new BitmapFont();
+        font.getData().setScale(2.0f, 2.0f);
 
         menuState = MenuState.CLOSED;
     }
@@ -44,6 +51,9 @@ public class Menu {
                 break;
             }
         }
+        spriteBatch.begin();
+        font.draw(spriteBatch, "Score: " + score, Gdx.graphics.getWidth() - 150, 50);
+        spriteBatch.end();
     }
 
     public boolean ProcessInput(Rectangle cursor) {
@@ -68,5 +78,13 @@ public class Menu {
             }
         }
         return false;
+    }
+
+    public void SetScore(int score) {
+        this.score = score;
+    }
+
+    public void IncrementScore() {
+        this.score++;
     }
 }
