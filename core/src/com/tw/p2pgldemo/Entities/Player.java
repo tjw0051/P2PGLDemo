@@ -1,5 +1,6 @@
 package com.tw.p2pgldemo.Entities;
 
+import P2PGL.Util.IKey;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -20,6 +21,7 @@ public class Player {
     private int layer = 1;
 
     private String name, textureName;
+    private IKey key;
     private GameScreen gameScreen;
     private Rectangle rectangle;
     private BitmapFont font;
@@ -42,11 +44,13 @@ public class Player {
         WALKING
     }
 
-    public Player(Rectangle rect, Texture tex, GameScreen gameScreen, String name, String textureName) {
+    public Player(Rectangle rect, Texture tex, GameScreen gameScreen,
+                  String name, IKey key, String textureName) {
         this.gameScreen = gameScreen;
         this.rectangle = rect;
         this.textureName = textureName;
         this.name = name;
+        this.key = key;
         playerAnimation = new PlayerAnimation(tex);
         playerAnimation.SetupAnimations();
         playerState = MovementState.STANDING;
@@ -166,6 +170,8 @@ public class Player {
     public Vector3 GetDestination() { return new Vector3(destination.x, destination.y, layer); }
 
     public String GetName() { return name; }
+
+    public IKey GetKey() { return key; }
 
     public com.tw.p2pgldemo.Networking.PlayerState GetState() {
         return new com.tw.p2pgldemo.Networking.PlayerState(

@@ -1,7 +1,10 @@
 package Tests;
 
+import P2PGL.Connection.HybridConnection;
+import P2PGL.Connection.IHybridConnection;
 import P2PGL.DHT.KademliaFacade;
 import P2PGL.Profile.*;
+import P2PGL.UDP.UDPChannel;
 import com.badlogic.gdx.math.Vector3;
 import com.tw.p2pgldemo.Networking.Connection;
 import com.tw.p2pgldemo.Networking.PlayerState;
@@ -18,7 +21,7 @@ import java.util.Set;
 public class ConnectionTest {
 
     static Connection connection;
-    static P2PGL.Connection server;
+    static IHybridConnection server;
 
     @Test
     public void testConnect() throws Exception {
@@ -37,7 +40,7 @@ public class ConnectionTest {
 
         //Set up server
         IProfile profile = new Profile(InetAddress.getLoopbackAddress(), 4000, "server");
-        server = new P2PGL.Connection(profile, new KademliaFacade());
+        server = new HybridConnection(profile, new KademliaFacade(), new UDPChannel(profile));
         try {
             server.Connect();
         } catch(IOException ioe) {
@@ -46,7 +49,7 @@ public class ConnectionTest {
             return -1;
         }
 
-        if(connection.Connect("client", "worldName") == -1) {
+        if(connection.Connect("client", "worldName", "steampunk") == -1) {
             fail("Failed to connect to server.");
             return -1;
         }

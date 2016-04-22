@@ -1,10 +1,13 @@
 package com.tw.p2pgldemo.Screens;
 
+import P2PGL.Profile.IProfile;
+import P2PGL.Util.IKey;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.maps.*;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
@@ -16,12 +19,12 @@ import com.tw.p2pgldemo.IO.AssetManager;
 import com.tw.p2pgldemo.IO.Interaction;
 import com.tw.p2pgldemo.IO.LevelData;
 import com.tw.p2pgldemo.Networking.Connection;
+import com.tw.p2pgldemo.Networking.MyProfile;
 import com.tw.p2pgldemo.Networking.PlayerState;
 import com.tw.p2pgldemo.Networking.StarCollectedMsg;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.Map;
 
 /**
  * Created by t_j_w on 08/03/2016.
@@ -36,6 +39,8 @@ public class GameScreen implements Screen {
     private Menu menu;
     private String worldName = "a5";
     private long lastStateTime;
+    private List<IKey> playerKeyCache;
+    private IKey playerKey;
 
     public GameScreen(Game game, String playerName, String playerTextureName) {
         this.game = game;
@@ -50,22 +55,24 @@ public class GameScreen implements Screen {
         game.assetManager.LoadLevels();
         game.assetManager.LoadTextures();
         game.assetManager.LoadCharacters();
+        this.playerKeyCache = new ArrayList<IKey>();
+        playerKey = Connection.GetInstance().GetKey();
 
         menu = new Menu();
         //world = new World(worldName);
         LoadWorld(worldName);
         //Load player.
-        player = CreatePlayer(500, 500, playerName, playerTextureName);
+        player = CreatePlayer(500, 500, playerName, playerKey, playerTextureName);
         players = new ArrayList<Player>();
         //Save player state to DHT
         //Connection.GetInstance().JoinWorld(worldName);
         lastStateTime = System.currentTimeMillis();
     }
 
-    private Player CreatePlayer(float x, float y, String playerName, String playerTextureName) {
+    private Player CreatePlayer(float x, float y, String playerName, IKey key, String playerTextureName) {
         return new Player(new Rectangle(x, y, 64, 96),
                 (Texture)AssetManager.GetInstance().characterTextures.get(playerTextureName),
-                    this, playerName, playerTextureName);
+                    this, playerName, key, playerTextureName);
     }
 
     @Override
@@ -84,6 +91,7 @@ public class GameScreen implements Screen {
         player.render(game.batch);
 
         if(!players.isEmpty()) {
+
             for (int i = 0; i < players.size(); i++) {
                 players.get(i).render(game.batch);
             }
@@ -145,7 +153,7 @@ public class GameScreen implements Screen {
     }
 
     private void UpdatePlayerStates() {
-        List<PlayerState> playerStates = Connection.GetInstance().GetStatesFromUDP();
+        List<PlayerState> playerStates = new ArrayList<PlayerState>(Connection.GetInstance().GetStatesFromUDP());
         Iterator playersIter = players.iterator();
         Iterator stateIter = playerStates.iterator();
 
@@ -153,12 +161,12 @@ public class GameScreen implements Screen {
         while(playersIter.hasNext()) {
             boolean found = false;
             Player player = (Player) playersIter.next();
-
             //Iterate through player states
             while(stateIter.hasNext()) {
                 PlayerState state = (PlayerState) stateIter.next();
                 //If a state for player is found, update the player's state.
-                if(state.getName().equals(player.GetName())) {
+                if(state.getKey().equals(player.GetKey())) {
+                    System.out.println("Updating player: " + player.GetName());
                     player.SetState(state);
                     stateIter.remove();
                     found = true;
@@ -166,21 +174,73 @@ public class GameScreen implements Screen {
             }
             //If no new state is found for the player, update its timeout counter
             if(found == false) {
+                System.out.println("No update for player: " + player.GetName());
                 player.playerTimeoutTick++;
                 //If timeout counter is over 3, remove player
-                if(player.playerTimeoutTick > 2)
+                if(player.playerTimeoutTick > 5) {
+                    Gdx.app.log("info", "Removing player: " + player.GetName() + " key: " + player.GetKey().toString());
+                    playerKeyCache.remove(player.GetKey());
                     playersIter.remove();
+                }
             }
         }
         //Loop through the remaining states and create new players for each.
         for(PlayerState state : playerStates) {
-            Vector3 playerPos = state.getPos();
-            players.add(CreatePlayer(playerPos.x, playerPos.y,
-                    state.getName(), state.getTextureName()));
+            if(!playerKeyCache.contains(state.getKey())) {
+                Vector3 playerPos = state.getPos();
+                MyProfile profile = (MyProfile) Connection.GetInstance().GetProfile(state.getKey());
+                if (profile != null) {
+                    Gdx.app.log("info", "Adding new player: " + profile.GetName() + " key: " + profile.GetKey().toString());
+                    players.add(CreatePlayer(playerPos.x, playerPos.y,
+                            state.getName(), state.getKey(), profile.GetTextureName()));
+                    playerKeyCache.add(players.get(players.size()-1).GetKey());
+                }
+            }
         }
         //Send this player's state
         Connection.GetInstance().SendState(player.GetState());
     }
+
+    /*
+    private void UpdatePlayerStates() {
+        List<PlayerState> playerStates = new ArrayList<PlayerState>(Connection.GetInstance().GetStatesFromUDP());
+        Iterator stateIter = playerStates.iterator();
+        List<IKey> updatedKeys = new ArrayList<IKey>();
+        while (stateIter.hasNext()) {
+            PlayerState state = (PlayerState)stateIter.next();
+            if(state != null) {
+                if(players.containsKey(state.getKey())) {
+                    Player player = players.get(state.getKey());
+                    player.SetState(state);
+                    updatedKeys.add(state.getKey());
+                    stateIter.remove();
+                }
+                //Add new player
+                else {
+                    Vector3 playerPos = state.getPos();
+                    MyProfile profile = (MyProfile) Connection.GetInstance().GetProfile(state.getKey());
+                    if(profile != null) {
+                        Gdx.app.log("info", "Adding new player: " + profile.GetName() + " key: " + profile.GetKey().toString());
+                        players.put(state.getKey(), CreatePlayer(playerPos.x, playerPos.y,
+                                state.getName(), profile.GetTextureName()));
+                    }
+                }
+            }
+        }
+        //Increase Timeout for players not updates
+        Iterator playerIter = players.entrySet().iterator();
+        while (playerIter.hasNext()) {
+            Map.Entry entry = (Map.Entry)playerIter.next();
+            if (!updatedKeys.contains((IKey)(entry.getKey())))
+                if(((Player)entry.getValue()).playerTimeoutTick > 2)
+                    playerIter.remove();
+                else
+                    ((Player)entry.getValue()).playerTimeoutTick++;
+        }
+        //Send this player's state
+        Connection.GetInstance().SendState(player.GetState());
+    }
+    */
 
     public void LoadWorld(String worldName) {
         this.worldName = worldName;
@@ -197,6 +257,7 @@ public class GameScreen implements Screen {
         Connection.GetInstance().SetWorld(world.GetLevelData());
         LoadWorld(worldName);
         players.clear();
+        playerKeyCache.clear();
         //Connection.GetInstance().SaveState(player.GetState());
         //Connection.GetInstance().ConnectLocalPlayers();
     }

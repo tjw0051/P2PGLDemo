@@ -1,14 +1,13 @@
 package com.tw.p2pgldemo.Networking;
 
-
-import P2PGL.ConnectionFactory;
 import P2PGL.Connection.IHybridConnection;
-import P2PGL.DHT.KademliaFacade;
+import P2PGL.P2PGL;
 import P2PGL.Profile.*;
 import P2PGL.EventListener.MessageReceivedListener;
 import P2PGL.Util.IKey;
 import P2PGL.Util.Key;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.maps.Map;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Json;
@@ -17,6 +16,7 @@ import com.tw.p2pgldemo.IO.LevelData;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -29,14 +29,16 @@ public class Connection implements MessageReceivedListener{
     private IHybridConnection conn;
     private Json json;
     private String name;
-    private P2PGL.Profile.Profile profile;
+    private MyProfile profile;
     private PlayerState playerState;
     private List<PlayerState> localPlayerStates;
+    private java.util.Map<IKey, PlayerState> localStates;
     private List<StarCollectedMsg> starMessages;
 
     private Connection() {
         json = new Json();
         localPlayerStates = new ArrayList<PlayerState>();
+        localStates = new HashMap<IKey, PlayerState>();
         starMessages = new ArrayList<StarCollectedMsg>();
     }
 
@@ -44,10 +46,10 @@ public class Connection implements MessageReceivedListener{
      *  Listen on UDP channel (Connection() channel + 1)
      * @param name  name of player.
      */
-    public int Connect(String name, String worldName) {
+    public int Connect(String name, String worldName, String textureName) {
         int err = 0;
         this.name = name;
-        err = ConnectDHT(worldName);
+        err = ConnectDHT(worldName, textureName);
         conn.AddMessageListener(this);
         //ConnectUDP();
 
@@ -68,7 +70,8 @@ public class Connection implements MessageReceivedListener{
         try {
             conn.JoinLocalChannel(worldName);
             localPlayerStates.clear();
-            return GetWorld(worldName);
+            localStates.clear();
+            return GetWorldData(worldName);
         } catch (IOException ioe) {
             System.out.println("Error changing UDP Channel");
         }
@@ -84,7 +87,7 @@ public class Connection implements MessageReceivedListener{
         }
     }
 
-    public LevelData GetWorld(String levelName) {
+    public LevelData GetWorldData(String levelName) {
         try {
             LevelData levelData = conn.Get(new Key(levelName), LevelData.class);
             return levelData;
@@ -96,24 +99,39 @@ public class Connection implements MessageReceivedListener{
         return null;
     }
 
-    private int ConnectDHT(String worldName) {
+    public IKey GetKey() {
+        return conn.GetKey();
+    }
+
+    public IProfile GetProfile(IKey key) {
+        try {
+            return conn.GetProfile(key);
+        } catch (IOException ioe) {
+            return null;
+        }
+    }
+
+    private int ConnectDHT(String worldName, String textureName) {
         int port = new RandomXS128().nextInt(100);
-        profile = new Profile(InetAddress.getLoopbackAddress(), 4000 + port, name);
-        profile.SetLocalChannel(worldName);
+        profile = new MyProfile(InetAddress.getLoopbackAddress(), 4000 + port, 4001 + port, worldName, name, new Key());
+        profile.SetTextureName(textureName);
+        //profile.SetLocalChannel(worldName);
 
         //conn = KademliaConnectionFactory.Get(profile); //new P2PGL.Connection(profile, new KademliaFacade());
-        conn = ConnectionFactory.GetHybridConnection(profile);
+        conn = P2PGL.GetInstance().GetConnection(profile);
         try {
             conn.Connect("server", InetAddress.getLoopbackAddress(), 4000);
             return 0;
         } catch (IOException ioe) {
             Gdx.app.log("Error", "Unable to connect to server");
+            //ConnectDHT(worldName, textureName);
             return -1;
         }
     }
 
     public int SendState(PlayerState playerState) {
         this.playerState = playerState;
+        playerState.setKey(profile.GetKey());
         try {
             conn.Broadcast(playerState, PlayerState.class);
         } catch(IOException ioe) {
@@ -148,15 +166,18 @@ public class Connection implements MessageReceivedListener{
     }
 
     public List<PlayerState> GetStatesFromUDP() {
-        return localPlayerStates;
+        return new ArrayList<PlayerState>(localStates.values());
     }
 
     public List<StarCollectedMsg> GetStarMessages() { return starMessages; }
 
     public void MessageReceivedListener(Object obj, Class messageType, IKey key) {
             if(messageType.equals(PlayerState.class)) {
-                System.out.println("PlayerState received");
-                localPlayerStates.add((PlayerState)obj);
+                System.out.println("PlayerState: " + key.toString());
+                //localPlayerStates.add((PlayerState)obj);
+                PlayerState state = (PlayerState)obj;
+                localStates.put(state.getKey(), state);
+                System.out.println("players: " + localStates.size());
             }
             if(messageType.equals(StarCollectedMsg.class)) {
                 System.out.println("Star received");

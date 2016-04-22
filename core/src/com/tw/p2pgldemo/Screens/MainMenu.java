@@ -157,9 +157,10 @@ public class MainMenu implements Screen, Input.TextInputListener{
     private void Connect() {
         if(!playerName.equals("")) {
             //int playerId = new RandomXS128().nextInt(100);
-            com.tw.p2pgldemo.Networking.Connection.GetInstance().Connect(playerName, "a5");//Integer.toString(playerId));
-            game.setScreen(new GameScreen(game, playerName, charTextureNames.get(currentCharacterTextureIter)));
-            dispose();
+            if(com.tw.p2pgldemo.Networking.Connection.GetInstance().Connect(playerName, "a5", charTextureNames.get(currentCharacterTextureIter)) == 0) {//Integer.toString(playerId));
+                game.setScreen(new GameScreen(game, playerName, charTextureNames.get(currentCharacterTextureIter)));
+                dispose();
+            }
         }
     }
 
