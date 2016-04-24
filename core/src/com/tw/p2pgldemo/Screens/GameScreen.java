@@ -177,7 +177,7 @@ public class GameScreen implements Screen {
                 System.out.println("No update for player: " + player.GetName());
                 player.playerTimeoutTick++;
                 //If timeout counter is over 3, remove player
-                if(player.playerTimeoutTick > 5) {
+                if(player.playerTimeoutTick > 3) {
                     Gdx.app.log("info", "Removing player: " + player.GetName() + " key: " + player.GetKey().toString());
                     playerKeyCache.remove(player.GetKey());
                     playersIter.remove();
