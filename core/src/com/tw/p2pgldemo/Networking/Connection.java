@@ -19,9 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by t_j_w on 15/03/2016.
- */
 public class Connection implements MessageReceivedListener{
     private static final Connection connection = new Connection();
     public static Connection GetInstance() { return connection; }
@@ -34,24 +31,22 @@ public class Connection implements MessageReceivedListener{
     private List<PlayerState> localPlayerStates;
     private java.util.Map<IKey, PlayerState> localStates;
     private List<StarCollectedMsg> starMessages;
-    private List<IKey> removePlayers;
 
     private Connection() {
         json = new Json();
         localPlayerStates = new ArrayList<PlayerState>();
         localStates = new HashMap<IKey, PlayerState>();
         starMessages = new ArrayList<StarCollectedMsg>();
-        removePlayers = new ArrayList<IKey>();
     }
 
     /** Create profile with random name from 0-100. Connect to server.
      *  Listen on UDP channel (Connection() channel + 1)
      * @param name  name of player.
      */
-    public int Connect(String name, String worldName, String textureName) {
+    public int Connect(String name, String worldName, String textureName, InetAddress address, int serverPort, int thisPort) {
         int err = 0;
         this.name = name;
-        err = ConnectDHT(worldName, textureName);
+        err = ConnectDHT(worldName, textureName, address, serverPort, thisPort);
         conn.AddMessageListener(this);
         //ConnectUDP();
 
@@ -81,8 +76,6 @@ public class Connection implements MessageReceivedListener{
         }
         return null;
     }
-
-    public List<IKey> GetRemovedPlayers() { return removePlayers; }
 
     public void SetWorld(LevelData levelData) {
         PlayerState state;
@@ -117,16 +110,20 @@ public class Connection implements MessageReceivedListener{
         }
     }
 
-    private int ConnectDHT(String worldName, String textureName) {
-        int port = new RandomXS128().nextInt(100);
-        profile = new MyProfile(InetAddress.getLoopbackAddress(), 4000 + port, 4001 + port, worldName, name, new Key());
+    private int ConnectDHT(String worldName, String textureName, InetAddress address, int serverPort, int thisPort) {
+
+        profile = new MyProfile(InetAddress.getLoopbackAddress(), thisPort, thisPort, worldName, name, new Key());
         profile.SetTextureName(textureName);
         //profile.SetLocalChannel(worldName);
 
         //conn = KademliaConnectionFactory.Get(profile); //new P2PGL.Connection(profile, new KademliaFacade());
+
+        //Inject custom factory with new Kademlia config
+        P2PGL.GetInstance().SetFactory(new CustomP2PGLFactory());
         conn = P2PGL.GetInstance().GetConnection(profile);
+
         try {
-            conn.Connect("server", InetAddress.getLoopbackAddress(), 4000);
+            conn.Connect("server", address, serverPort);
             return 0;
         } catch (IOException ioe) {
             Gdx.app.log("Error", "Unable to connect to server");
@@ -183,7 +180,6 @@ public class Connection implements MessageReceivedListener{
                 String mesg = (String) obj;
                 if(mesg == "exit") {
                     conn.GetLocalChannel().Remove(key);
-                    removePlayers.add(key);
                 }
             }
 

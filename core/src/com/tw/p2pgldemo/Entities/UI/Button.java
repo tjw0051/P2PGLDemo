@@ -27,6 +27,11 @@ public class Button {
         SetTexture(textureName);
         rect = new Rectangle(posX, posY, texture.getRegionWidth() * scale, texture.getRegionHeight() * scale);
     }
+    public Button(String textureName, int posX, int posY, int width, int height) {
+        this();
+        SetTexture(textureName);
+        rect = new Rectangle(posX, posY, width, height);
+    }
 
     public Button(Texture texture, int posX, int posY, float scale) {
         this();

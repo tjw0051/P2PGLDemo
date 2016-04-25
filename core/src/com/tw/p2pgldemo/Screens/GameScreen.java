@@ -220,7 +220,7 @@ public class GameScreen implements Screen {
                 getWorld().RemoveTileAt(new Vector3(interaction.getPos().x,
                         interaction.getPos().y, interaction.getPos().z+1));
                 Connection.GetInstance().StarCollected(interaction.getPos());
-                //Connection.GetInstance().SetWorld(world.GetLevelData());
+                Connection.GetInstance().SetWorld(world.GetLevelData());
             }
         }
     }

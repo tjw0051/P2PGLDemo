@@ -9,23 +9,23 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
 import com.tw.p2pgldemo.Entities.UI.Button;
 import com.tw.p2pgldemo.Game;
 import com.tw.p2pgldemo.IO.AssetManager;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by t_j_w on 08/03/2016.
  */
 public class MainMenu implements Screen, Input.TextInputListener{
 
-    Button exitButton, connectButton, inputButton;
-    Button arrowLeftButton, arrowRightButton, characterButton;
+    Button exitButton, connectButton;
+    Button arrowLeftButton, arrowRightButton, characterButton, inputButton,
+            ipButton, serverPortButton;
     BitmapFont font;
     MenuState menuState;
     Game game;
@@ -34,6 +34,9 @@ public class MainMenu implements Screen, Input.TextInputListener{
     int currentCharacterTextureIter;
     List<Texture> charTextures;
     List<String> charTextureNames;
+    int thisPort, serverPort;
+    InetAddress ipAddress = InetAddress.getLoopbackAddress();
+    String currentInputBox;
 
     private enum MenuState {
         MAINMENU,
@@ -45,6 +48,9 @@ public class MainMenu implements Screen, Input.TextInputListener{
         this.game = game;
         game.assetManager.LoadUI();
         game.assetManager.LoadCharacters();
+
+        thisPort = new RandomXS128().nextInt(100) + 2000;
+        serverPort = 4000;
 
         connectButton = new Button("connectbutton", 0, 0, 1.0f);
         exitButton = new Button("exitbutton", 0, 0, 1.0f);
@@ -59,6 +65,8 @@ public class MainMenu implements Screen, Input.TextInputListener{
                 new TextureRegion((Texture)AssetManager.GetInstance().characterTextures.get("pirate"), 0, 0, 32, 48),
                 175, 290, 5f);
         inputButton = new Button("button", 575, 410, 1.0f);
+        ipButton = new Button("glowbox", 156, 714, 200, 40);
+        serverPortButton = new Button("glowbox", 526, 714, 150, 40);
     }
     @Override
     public void show() { }
@@ -91,8 +99,9 @@ public class MainMenu implements Screen, Input.TextInputListener{
                 game.batch.begin();
                 font.draw(game.batch, "Enter player name:", 580, 530);
                 font.draw(game.batch, playerName, 590, 470);
+                font.draw(game.batch, ipAddress.getHostAddress(), 170, 720);
+                font.draw(game.batch, Integer.toString(thisPort), 535, 720);
                 game.batch.end();
-
                 break;
             }
         }
@@ -105,7 +114,8 @@ public class MainMenu implements Screen, Input.TextInputListener{
      */
     private void ProcessInput() {
         if(Gdx.input.justTouched()) {
-            Rectangle cursorRect = new Rectangle(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY(), 1, 1);
+            Rectangle cursorRect = new Rectangle(Gdx.input.getX(),
+                    Gdx.graphics.getHeight() - Gdx.input.getY(), 1, 1);
 
             switch (menuState) {
                 case MAINMENU: {
@@ -125,7 +135,18 @@ public class MainMenu implements Screen, Input.TextInputListener{
                         CycleCharacters(1);
                     }
                     if(cursorRect.overlaps(inputButton.GetRect())) {
+                        currentInputBox = "name";
                         Gdx.input.getTextInput(this, "Enter Name:", "", "");
+                    }
+
+                    if(cursorRect.overlaps(ipButton.GetRect())) {
+                        currentInputBox = "ip";
+                        Gdx.input.getTextInput(this, "Enter IP Address:", "", "");
+                    }
+
+                    if(cursorRect.overlaps(serverPortButton.GetRect())) {
+                        currentInputBox = "thisPort";
+                        Gdx.input.getTextInput(this, "Enter Port Address:", "", "");
                     }
 
                     if(cursorRect.overlaps(exitButton.GetRect())) {
@@ -157,7 +178,10 @@ public class MainMenu implements Screen, Input.TextInputListener{
     private void Connect() {
         if(!playerName.equals("")) {
             //int playerId = new RandomXS128().nextInt(100);
-            if(com.tw.p2pgldemo.Networking.Connection.GetInstance().Connect(playerName, "a5", charTextureNames.get(currentCharacterTextureIter)) == 0) {//Integer.toString(playerId));
+            if(com.tw.p2pgldemo.Networking.Connection.GetInstance()
+                    .Connect(playerName, "a5",
+                            charTextureNames.get(currentCharacterTextureIter), ipAddress,
+                            serverPort, thisPort) == 0) {//Integer.toString(playerId));
                 game.setScreen(new GameScreen(game, playerName, charTextureNames.get(currentCharacterTextureIter)));
                 dispose();
             }
@@ -205,7 +229,21 @@ public class MainMenu implements Screen, Input.TextInputListener{
 
     @Override
     public void input(String text) {
-        playerName = text;
+        if(currentInputBox.equals("name"))
+            playerName = text;
+        if(currentInputBox.equals("ip")) {
+            try {
+                InetAddress newip = InetAddress.getByName("text");
+                ipAddress = newip;
+            } catch (UnknownHostException uhs) {
+                System.out.println("Unknown host");
+            }
+        }
+        if(currentInputBox.equals("thisPort")) {
+            int newport = Integer.parseInt(text);
+            if(newport > 0 && newport < 65536)
+                thisPort = newport;
+        }
     }
 
     @Override
