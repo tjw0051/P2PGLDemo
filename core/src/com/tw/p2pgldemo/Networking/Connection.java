@@ -34,12 +34,14 @@ public class Connection implements MessageReceivedListener{
     private List<PlayerState> localPlayerStates;
     private java.util.Map<IKey, PlayerState> localStates;
     private List<StarCollectedMsg> starMessages;
+    private List<IKey> removePlayers;
 
     private Connection() {
         json = new Json();
         localPlayerStates = new ArrayList<PlayerState>();
         localStates = new HashMap<IKey, PlayerState>();
         starMessages = new ArrayList<StarCollectedMsg>();
+        removePlayers = new ArrayList<IKey>();
     }
 
     /** Create profile with random name from 0-100. Connect to server.
@@ -68,15 +70,19 @@ public class Connection implements MessageReceivedListener{
 
     public LevelData JoinWorld(String worldName) {
         try {
+            conn.Broadcast("exit", String.class);
             conn.JoinLocalChannel(worldName);
             localPlayerStates.clear();
             localStates.clear();
             return GetWorldData(worldName);
         } catch (IOException ioe) {
             System.out.println("Error changing UDP Channel");
+            ioe.printStackTrace();
         }
         return null;
     }
+
+    public List<IKey> GetRemovedPlayers() { return removePlayers; }
 
     public void SetWorld(LevelData levelData) {
         PlayerState state;
@@ -160,29 +166,44 @@ public class Connection implements MessageReceivedListener{
         } catch (IOException ioe) {
             Gdx.app.log("Error", "Unable to retrieve state of player: " + playerName);
         } catch (ClassNotFoundException cnfe) {
-
         }
         return null;
     }
 
     public List<PlayerState> GetStatesFromUDP() {
-        return new ArrayList<PlayerState>(localStates.values());
+        List<PlayerState> currStates = new ArrayList<PlayerState>(localStates.values());
+        localStates.clear();
+        return currStates;
     }
 
     public List<StarCollectedMsg> GetStarMessages() { return starMessages; }
 
     public void MessageReceivedListener(Object obj, Class messageType, IKey key) {
+            if(messageType.equals(String.class)) {
+                String mesg = (String) obj;
+                if(mesg == "exit") {
+                    conn.GetLocalChannel().Remove(key);
+                    removePlayers.add(key);
+                }
+            }
+
             if(messageType.equals(PlayerState.class)) {
                 System.out.println("PlayerState: " + key.toString());
-                //localPlayerStates.add((PlayerState)obj);
                 PlayerState state = (PlayerState)obj;
                 localStates.put(state.getKey(), state);
-                System.out.println("players: " + localStates.size());
             }
             if(messageType.equals(StarCollectedMsg.class)) {
                 System.out.println("Star received");
                 starMessages.add((StarCollectedMsg)obj);
             }
+    }
+
+    private void AddPlayer(IKey ikey) {
+
+    }
+
+    public void RemovePlayer(IKey key) {
+        conn.GetLocalChannel().Remove(key);
     }
 
     public String GetName() {

@@ -1,6 +1,7 @@
 package com.tw.p2pgldemo.Screens;
 
 import P2PGL.Profile.IProfile;
+import P2PGL.Profile.Profile;
 import P2PGL.Util.IKey;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.maps.*;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.tw.p2pgldemo.Entities.Filters.PlayerKeyFilter;
 import com.tw.p2pgldemo.Entities.Tile;
 import com.tw.p2pgldemo.Entities.World;
 import com.tw.p2pgldemo.Game;
@@ -22,6 +24,7 @@ import com.tw.p2pgldemo.Networking.Connection;
 import com.tw.p2pgldemo.Networking.MyProfile;
 import com.tw.p2pgldemo.Networking.PlayerState;
 import com.tw.p2pgldemo.Networking.StarCollectedMsg;
+import kademlia.exceptions.ContentNotFoundException;
 
 import java.util.*;
 import java.util.Map;
@@ -30,6 +33,8 @@ import java.util.Map;
  * Created by t_j_w on 08/03/2016.
  */
 public class GameScreen implements Screen {
+    private final long timeout = 1000L;
+
     private Game game;
     private OrthographicCamera camera;
     //TileLayer tileLayer;
@@ -59,7 +64,6 @@ public class GameScreen implements Screen {
         playerKey = Connection.GetInstance().GetKey();
 
         menu = new Menu();
-        //world = new World(worldName);
         LoadWorld(worldName);
         //Load player.
         player = CreatePlayer(500, 500, playerName, playerKey, playerTextureName);
@@ -90,12 +94,21 @@ public class GameScreen implements Screen {
         //tileLayer.render(game.batch);
         player.render(game.batch);
 
-        if(!players.isEmpty()) {
-
-            for (int i = 0; i < players.size(); i++) {
-                players.get(i).render(game.batch);
+        //  Update Players - remove timed-out players
+        long time = System.currentTimeMillis();
+        Iterator playerIter = players.iterator();
+        while(playerIter.hasNext()) {
+            Player player = (Player)playerIter.next();
+            //System.out.println(player.GetName() + " timeout: " + (time - player.lastUpdated));
+            if(time - player.lastUpdated > timeout) {
+                Connection.GetInstance().RemovePlayer(player.GetKey());
+                playerIter.remove();
             }
+
+            else
+                player.render(game.batch);
         }
+
         game.batch.begin();
         game.batch.end();
 
@@ -153,94 +166,33 @@ public class GameScreen implements Screen {
     }
 
     private void UpdatePlayerStates() {
-        List<PlayerState> playerStates = new ArrayList<PlayerState>(Connection.GetInstance().GetStatesFromUDP());
-        Iterator playersIter = players.iterator();
-        Iterator stateIter = playerStates.iterator();
+        List<PlayerState> states = Connection.GetInstance().GetStatesFromUDP();
+        Iterator playerStateIter = states.iterator();
+        while (playerStateIter.hasNext()) {
+            PlayerState state = (PlayerState)playerStateIter.next();
+            int playerIndex = PlayerKeyFilter.PlayerWithKey(players, state.getKey());
+            if(playerIndex != -1) {
+                System.out.println("Updating player: " + state.getName() +
+                        " world: " + state.getWorld() + " pos: " + state.getPos().x
+                        + ", " + state.getPos().y);
+                players.get(playerIndex).SetState(state);
+                System.out.println("statecount: " + states.size());
+                playerStateIter.remove();
+                System.out.println("statecount: " + states.size());
+            }
+            else {
+                MyProfile prof = (MyProfile) Connection.GetInstance().GetProfile(state.getKey());
+                if(prof != null && prof.GetLocalChannelName().equals(worldName)) {
+                    System.out.println("Adding player: " + state.getName());
+                    players.add(CreatePlayer(state.getPos().x, state.getPos().y,
+                            state.getName(), state.getKey(), prof.GetTextureName()));
+                }
+            }
+        }
 
-        //Iterate through players
-        while(playersIter.hasNext()) {
-            boolean found = false;
-            Player player = (Player) playersIter.next();
-            //Iterate through player states
-            while(stateIter.hasNext()) {
-                PlayerState state = (PlayerState) stateIter.next();
-                //If a state for player is found, update the player's state.
-                if(state.getKey().equals(player.GetKey())) {
-                    System.out.println("Updating player: " + player.GetName());
-                    player.SetState(state);
-                    stateIter.remove();
-                    found = true;
-                }
-            }
-            //If no new state is found for the player, update its timeout counter
-            if(found == false) {
-                System.out.println("No update for player: " + player.GetName());
-                player.playerTimeoutTick++;
-                //If timeout counter is over 3, remove player
-                if(player.playerTimeoutTick > 3) {
-                    Gdx.app.log("info", "Removing player: " + player.GetName() + " key: " + player.GetKey().toString());
-                    playerKeyCache.remove(player.GetKey());
-                    playersIter.remove();
-                }
-            }
-        }
-        //Loop through the remaining states and create new players for each.
-        for(PlayerState state : playerStates) {
-            if(!playerKeyCache.contains(state.getKey())) {
-                Vector3 playerPos = state.getPos();
-                MyProfile profile = (MyProfile) Connection.GetInstance().GetProfile(state.getKey());
-                if (profile != null) {
-                    Gdx.app.log("info", "Adding new player: " + profile.GetName() + " key: " + profile.GetKey().toString());
-                    players.add(CreatePlayer(playerPos.x, playerPos.y,
-                            state.getName(), state.getKey(), profile.GetTextureName()));
-                    playerKeyCache.add(players.get(players.size()-1).GetKey());
-                }
-            }
-        }
         //Send this player's state
         Connection.GetInstance().SendState(player.GetState());
     }
-
-    /*
-    private void UpdatePlayerStates() {
-        List<PlayerState> playerStates = new ArrayList<PlayerState>(Connection.GetInstance().GetStatesFromUDP());
-        Iterator stateIter = playerStates.iterator();
-        List<IKey> updatedKeys = new ArrayList<IKey>();
-        while (stateIter.hasNext()) {
-            PlayerState state = (PlayerState)stateIter.next();
-            if(state != null) {
-                if(players.containsKey(state.getKey())) {
-                    Player player = players.get(state.getKey());
-                    player.SetState(state);
-                    updatedKeys.add(state.getKey());
-                    stateIter.remove();
-                }
-                //Add new player
-                else {
-                    Vector3 playerPos = state.getPos();
-                    MyProfile profile = (MyProfile) Connection.GetInstance().GetProfile(state.getKey());
-                    if(profile != null) {
-                        Gdx.app.log("info", "Adding new player: " + profile.GetName() + " key: " + profile.GetKey().toString());
-                        players.put(state.getKey(), CreatePlayer(playerPos.x, playerPos.y,
-                                state.getName(), profile.GetTextureName()));
-                    }
-                }
-            }
-        }
-        //Increase Timeout for players not updates
-        Iterator playerIter = players.entrySet().iterator();
-        while (playerIter.hasNext()) {
-            Map.Entry entry = (Map.Entry)playerIter.next();
-            if (!updatedKeys.contains((IKey)(entry.getKey())))
-                if(((Player)entry.getValue()).playerTimeoutTick > 2)
-                    playerIter.remove();
-                else
-                    ((Player)entry.getValue()).playerTimeoutTick++;
-        }
-        //Send this player's state
-        Connection.GetInstance().SendState(player.GetState());
-    }
-    */
 
     public void LoadWorld(String worldName) {
         this.worldName = worldName;
@@ -258,8 +210,6 @@ public class GameScreen implements Screen {
         LoadWorld(worldName);
         players.clear();
         playerKeyCache.clear();
-        //Connection.GetInstance().SaveState(player.GetState());
-        //Connection.GetInstance().ConnectLocalPlayers();
     }
 
     public void ProcessInteraction(Interaction interaction) {

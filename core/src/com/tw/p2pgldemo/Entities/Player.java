@@ -26,17 +26,15 @@ public class Player {
     private Rectangle rectangle;
     private BitmapFont font;
     private TextureRegion currentFrame;
-
     private Vector2 pos, destination;
-
     private MovementState playerState;
-
     private Interaction destinationInteraction;
     private PlayerAnimation playerAnimation;
     //float moveTime;
     private Vector2 normDirection;
     private float distance;
 
+    public long lastUpdated;
     public int playerTimeoutTick = 0;
 
     public enum MovementState {
@@ -57,6 +55,7 @@ public class Player {
         pos = new Vector2(rect.x, rect.y);
         destination = new Vector2(pos.x, pos.y);
         font = new BitmapFont();
+        lastUpdated = System.currentTimeMillis();
     }
 
     public void render(SpriteBatch spriteBatch) {
@@ -108,6 +107,7 @@ public class Player {
             this.playerState = MovementState.WALKING;
         }
         this.playerTimeoutTick = 0;
+        lastUpdated = System.currentTimeMillis();
     }
 
     private void Interact() {
