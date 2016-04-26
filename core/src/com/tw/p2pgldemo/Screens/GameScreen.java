@@ -37,7 +37,6 @@ public class GameScreen implements Screen {
 
     private Game game;
     private OrthographicCamera camera;
-    //TileLayer tileLayer;
     private Player player;
     private List<Player> players;
     private World world;
@@ -69,7 +68,6 @@ public class GameScreen implements Screen {
         player = CreatePlayer(500, 500, playerName, playerKey, playerTextureName);
         players = new ArrayList<Player>();
         //Save player state to DHT
-        //Connection.GetInstance().JoinWorld(worldName);
         lastStateTime = System.currentTimeMillis();
     }
 
@@ -91,7 +89,6 @@ public class GameScreen implements Screen {
         camera.update();
         game.batch.setProjectionMatrix(camera.combined);
         world.render(game.batch);
-        //tileLayer.render(game.batch);
         player.render(game.batch);
 
         //  Update Players - remove timed-out players
@@ -99,7 +96,6 @@ public class GameScreen implements Screen {
         Iterator playerIter = players.iterator();
         while(playerIter.hasNext()) {
             Player player = (Player)playerIter.next();
-            //System.out.println(player.GetName() + " timeout: " + (time - player.lastUpdated));
             if(time - player.lastUpdated > timeout) {
                 Connection.GetInstance().RemovePlayer(player.GetKey());
                 playerIter.remove();
@@ -117,7 +113,6 @@ public class GameScreen implements Screen {
             UpdatePlayerStates();
             UpdateStars();
             lastStateTime = System.currentTimeMillis();
-            //Connection.GetInstance().SendState(worldName, player.GetPos(), player.GetDestination());
         }
         menu.render(game.batch);
     }
@@ -196,7 +191,6 @@ public class GameScreen implements Screen {
 
     public void LoadWorld(String worldName) {
         this.worldName = worldName;
-        //Connection.GetInstance().SaveState(player.GetState());
         LevelData netData = Connection.GetInstance().JoinWorld(worldName);
         if(netData != null)
             world = new World(netData);

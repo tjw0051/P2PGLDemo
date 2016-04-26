@@ -4,9 +4,6 @@ import P2PGL.Util.IKey;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 
-/**
- * Created by t_j_w on 15/03/2016.
- */
 public class PlayerState {
 
 

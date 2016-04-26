@@ -12,8 +12,6 @@ import com.tw.p2pgldemo.Entities.UI.*;
  * Created by t_j_w on 27/03/2016.
  */
 public class Menu {
-    //Texture menuButton, exitButton;
-    private Rectangle menuButtonRect, exitButtonRect;
     private MenuState menuState;
     private BitmapFont font;
     private Button menuButton, exitButton;

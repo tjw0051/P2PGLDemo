@@ -57,11 +57,7 @@ public class Tile {
 
     public Vector2 getLayerIndex() { return layerIndex; }
 
-    public Rectangle GetRect() { return rect; }
-
     public Rectangle GetBoundingBox() { return new Rectangle(rect.x, rect.y + tileBoundingBox.y /2, rect.width, tileBoundingBox.height ); }
-
-    public Vector2 GetPos() { return pos; }
 
     public Vector2 GetLayer() { return layerIndex; }
 

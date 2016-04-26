@@ -20,8 +20,8 @@ public class AssetManager {
     public static AssetManager GetInstance() { return assetManager; }
 
     public Texture grass;
-    public Map loadedTextures, characterTextures; //String, Texture
-    public Map levels; // String, String[][]
+    public Map loadedTextures, characterTextures;
+    public Map levels;
     public Map interactions;
     public Map ui;
     private Json json;
@@ -35,7 +35,7 @@ public class AssetManager {
     }
 
     public void LoadTextures() {
-        loadedTextures = new HashMap();// LoadKey("Textures/World/TextureKey.txt", "Textures/World/");
+        loadedTextures = new HashMap();
         HashMap key = LoadKey("Textures/World/TextureKey.txt");
         Iterator iter = key.entrySet().iterator();
         while(iter.hasNext()) {
@@ -46,7 +46,6 @@ public class AssetManager {
     }
 
     public void LoadCharacters() {
-        //characterTextures = LoadKey("Textures/Characters/CharacterKey.txt", "Textures/Characters/");
         characterTextures = new HashMap();
         HashMap key = LoadKey("Textures/Characters/CharacterKey.txt");
         Iterator iter = key.entrySet().iterator();

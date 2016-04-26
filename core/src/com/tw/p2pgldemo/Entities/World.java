@@ -13,9 +13,6 @@ import com.tw.p2pgldemo.IO.LevelData;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by t_j_w on 10/03/2016.
- */
 public class World {
 
     private final Rectangle tileBounding = new Rectangle(0, 100, 100, 80);

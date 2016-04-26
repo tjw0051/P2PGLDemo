@@ -30,7 +30,6 @@ public class Player {
     private MovementState playerState;
     private Interaction destinationInteraction;
     private PlayerAnimation playerAnimation;
-    //float moveTime;
     private Vector2 normDirection;
     private float distance;
 
@@ -61,33 +60,21 @@ public class Player {
     public void render(SpriteBatch spriteBatch) {
         switch (playerState) {
             case STANDING: {
-                //currentFrame = idleFrame;
                 break;
             }
             case WALKING: {
-
-                //CalculateDirection();
                 Vector2 direction = new Vector2(destination.x - pos.x, destination.y - pos.y);
                 normDirection = direction.nor();
                 pos.add((normDirection.scl(walkingSpeed).scl(Gdx.graphics.getDeltaTime())));
-                //pos.interpolate(destination, System.currentTimeMillis() - moveTime, Interpolation.linear);
-                //Arrived at destination
-                //if((int)pos.x == (int)destination.x && (int)pos.y == (int)destination.y) {
                 if(Vector2.dst(pos.x, pos.y, destination.x, destination.y) <= 1) {
-                    //pos = destination;
                     playerState = MovementState.STANDING.STANDING;
                     pos.x = destination.x;
                     pos.y = destination.y;
-                    /*
-                    com.tw.p2pgldemo.Networking.Connection.GetInstance().SaveState("a1", new Vector3(pos.x, pos.y, 0),
-                            new Vector3(0,0,0));
-                    */
                     if(destinationInteraction != null) {
                         Interact();
                         destinationInteraction = null;
                     }
                 }
-                //moveTime = System.currentTimeMillis();
                 break;
             }
         }
@@ -124,14 +111,6 @@ public class Player {
         }
     }
 
-    //Order player to walk to position
-    public void Go(float x, float y) {
-        if(playerState != MovementState.WALKING) {
-            playerState = MovementState.WALKING;
-            destination = new Vector2(x - rectangle.width / 2, y);
-        }
-    }
-
     /** Direct player to walk to position x,y and perform interaction
      *  at destination.
      * @param x destination
@@ -143,24 +122,9 @@ public class Player {
         destination.y = y;
         distance  = pos.dst(destination);
         playerState = MovementState.WALKING;
-        //moveTime = System.currentTimeMillis();
         if(interaction != null)
             destinationInteraction = interaction;
-
-        /*
-        if(playerState != MovementState.WALKING) {
-            destinationInteraction = interaction;
-            Go(x, y);
-        }
-        */
     }
-/*
-    public void Go(Tile tile) {
-        playerState = MovementState.WALKING;
-        destination.x = tile.GetRect().x;
-        destination.y = tile.GetRect().y;
-    }
-*/
     public int GetLayer() { return layer; }
 
     public Vector3 GetPos() {
@@ -168,8 +132,6 @@ public class Player {
     }
 
     public Vector3 GetDestination() { return new Vector3(destination.x, destination.y, layer); }
-
-    public String GetName() { return name; }
 
     public IKey GetKey() { return key; }
 

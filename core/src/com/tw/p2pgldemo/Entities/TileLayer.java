@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.ui.List;
 import com.tw.p2pgldemo.IO.AssetManager;
 import com.tw.p2pgldemo.IO.Interaction;
 
@@ -21,10 +20,8 @@ public class TileLayer {
     private Rectangle textureRect;
     private Vector2 pos;
     private Vector2 cells;
-    private String levelName;
     private String[] tileValues;
     private AssetManager aM;
-    private int screenHeight;
     private java.util.List<Tile> tiles;
     private float scaling;
 
@@ -87,7 +84,6 @@ public class TileLayer {
      * @return  index of intersecting tile. Returns -1 if no collision.
      */
     public int TileCollisionCheck(Rectangle collider) {
-        //for(int i = 0; i < tiles.size(); i++) {
         for(int i = tiles.size(); i --> 0;) {
             if (tiles.get(i).GetBoundingBox().overlaps(collider))
                 return i;

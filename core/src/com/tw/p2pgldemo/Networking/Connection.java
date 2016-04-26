@@ -7,8 +7,6 @@ import P2PGL.EventListener.MessageReceivedListener;
 import P2PGL.Util.IKey;
 import P2PGL.Util.Key;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.maps.Map;
-import com.badlogic.gdx.math.RandomXS128;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Json;
 import com.tw.p2pgldemo.IO.LevelData;
@@ -48,7 +46,6 @@ public class Connection implements MessageReceivedListener{
         this.name = name;
         err = ConnectDHT(worldName, textureName, address, serverPort, thisPort);
         conn.AddMessageListener(this);
-        //ConnectUDP();
 
         return err;
     }
@@ -56,7 +53,6 @@ public class Connection implements MessageReceivedListener{
     public int Disconnect() {
         try {
             conn.Disconnect();
-            //udpChannel.Stop();
         } catch(IOException ioe) {
             return -1;
         }
@@ -78,7 +74,6 @@ public class Connection implements MessageReceivedListener{
     }
 
     public void SetWorld(LevelData levelData) {
-        PlayerState state;
         try {
             conn.Store(new Key(levelData.GetName()), levelData, levelData.getClass());
         } catch (IOException ioe) {
@@ -187,10 +182,6 @@ public class Connection implements MessageReceivedListener{
                 System.out.println("Star received");
                 starMessages.add((StarCollectedMsg)obj);
             }
-    }
-
-    private void AddPlayer(IKey ikey) {
-
     }
 
     public void RemovePlayer(IKey key) {
