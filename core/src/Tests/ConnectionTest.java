@@ -49,7 +49,7 @@ public class ConnectionTest {
             return -1;
         }
 
-        if(connection.Connect("client", "worldName", "steampunk") == -1) {
+        if(connection.Connect("client", "worldName", "steampunk", InetAddress.getLoopbackAddress(), 4000, 3000) == -1) {
             fail("Failed to connect to server.");
             return -1;
         }

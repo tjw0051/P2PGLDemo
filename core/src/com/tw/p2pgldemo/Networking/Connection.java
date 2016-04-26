@@ -112,11 +112,8 @@ public class Connection implements MessageReceivedListener{
 
     private int ConnectDHT(String worldName, String textureName, InetAddress address, int serverPort, int thisPort) {
 
-        profile = new MyProfile(InetAddress.getLoopbackAddress(), thisPort, thisPort, worldName, name, new Key());
+        profile = new MyProfile(InetAddress.getLoopbackAddress(), thisPort, thisPort +1, worldName, name, new Key());
         profile.SetTextureName(textureName);
-        //profile.SetLocalChannel(worldName);
-
-        //conn = KademliaConnectionFactory.Get(profile); //new P2PGL.Connection(profile, new KademliaFacade());
 
         //Inject custom factory with new Kademlia config
         P2PGL.GetInstance().SetFactory(new CustomP2PGLFactory());
@@ -127,7 +124,6 @@ public class Connection implements MessageReceivedListener{
             return 0;
         } catch (IOException ioe) {
             Gdx.app.log("Error", "Unable to connect to server");
-            //ConnectDHT(worldName, textureName);
             return -1;
         }
     }
@@ -139,7 +135,6 @@ public class Connection implements MessageReceivedListener{
             conn.Broadcast(playerState, PlayerState.class);
         } catch(IOException ioe) {
             Gdx.app.log("Error", "Error sending state");
-            //DiagnoseIOE(ioe);
         }
         return 0;
     }
